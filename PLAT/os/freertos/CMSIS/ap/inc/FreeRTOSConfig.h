@@ -190,6 +190,11 @@
 #define xPortPendSVHandler                    PendSV_Handler
 #define vPortSVCHandler                       SVC_Handler
 
+// Toit needs thread-local storage pointers:
+//   Slot 0: Toit Thread* pointer
+//   Slot 1: cmpctmalloc heap tag (when enabled)
+#define configNUM_THREAD_LOCAL_STORAGE_POINTERS  2
+
 /* Include debug event definitions */
 //#include "freertos_evr.h"
 
