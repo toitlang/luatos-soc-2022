@@ -126,6 +126,14 @@ SECTIONS
    *(.exceptCheck)
   } >ASMB_AREA
 
+  /* Toit RTC memory: preserved across deep sleep (not zeroed on warm boot). */
+  .toit_rtc_noinit (NOLOAD):
+  {
+    . = ALIGN(4);
+    *(.toit.rtc.noinit)
+    . = ALIGN(4);
+  } >ASMB_AREA
+
   .unload_cpaon CP_AONMEMBACKUP_START_ADDR (NOLOAD):
   {
 
@@ -260,6 +268,12 @@ SECTIONS
     Load$$LOAD_DRAM_SHARED$$Base = LOADADDR(.load_dram_shared);
     Image$$LOAD_DRAM_SHARED$$Base = .;
     *(.data*)
+    /* C++ static initializers — needed for Toit VM globals. */
+    . = ALIGN(4);
+    __init_array_start = .;
+    KEEP (*(SORT(.init_array.*)))
+    KEEP (*(.init_array*))
+    __init_array_end = .;
     . = ALIGN(4);
   } >MSMB_AREA AT>FLASH_AREA
 
