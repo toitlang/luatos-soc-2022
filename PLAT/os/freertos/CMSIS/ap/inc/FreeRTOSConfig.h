@@ -190,10 +190,10 @@
 #define xPortPendSVHandler                    PendSV_Handler
 #define vPortSVCHandler                       SVC_Handler
 
-// Toit needs thread-local storage pointers:
-//   Slot 0: Toit Thread* pointer
-//   Slot 1: cmpctmalloc heap tag (when enabled)
-#define configNUM_THREAD_LOCAL_STORAGE_POINTERS  2
+// Note: Do NOT set configNUM_THREAD_LOCAL_STORAGE_POINTERS here.
+// It would change the TCB struct layout, breaking ABI compatibility
+// with the prebuilt libfreertos.a. Toit uses its own task-to-thread
+// map instead.
 
 /* Include debug event definitions */
 //#include "freertos_evr.h"
