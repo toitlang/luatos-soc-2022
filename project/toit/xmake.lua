@@ -10,6 +10,7 @@ target(TARGET_NAME)
     set_targetdir(LIB_DIR)
 
     add_includedirs("./inc", {public = true})
+    add_includedirs(SDK_TOP .. "/PLAT/os/freertos/portable/mem/cmpctmalloc", {public = true})
     add_files("./src/*.c", {public = true})
 
     -- Link the project's own library.

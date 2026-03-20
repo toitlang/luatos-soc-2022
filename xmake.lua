@@ -390,6 +390,11 @@ target(USER_PROJECT_NAME..".elf")
         add_files(SDK_TOP .. "/thirdparty/printf/*.c",{public = true})
 		add_files(SDK_TOP .. "/thirdparty/littlefs/**.c",{public = true})
 		add_files(SDK_TOP .. "/interface/src/*.c",{public = true})
+        -- cmpctmalloc heap replaces heap_6 from libfreertos.a.
+        add_includedirs(SDK_TOP .. "/PLAT/os/freertos/portable/mem/cmpctmalloc",{public = true})
+        add_files(SDK_TOP .. "/PLAT/os/freertos/portable/mem/cmpctmalloc/cmpctmalloc.c",{public = true})
+        add_files(SDK_TOP .. "/PLAT/os/freertos/src/heap_7.c",{public = true})
+        add_ldflags("-Wl,--allow-multiple-definition", {force = true})
     else
         remove_files(SDK_TOP .. "/interface/src/luat_kv_ec618.c")
     end

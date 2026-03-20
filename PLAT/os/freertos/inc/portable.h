@@ -143,6 +143,36 @@ size_t xPortGetMaximumFreeBlockSize( void ) PRIVILEGED_FUNCTION;
 uint8_t xPortGetFreeHeapPct( void ) PRIVILEGED_FUNCTION;
 uint8_t xPortIsFreeHeapOnAlert( void ) PRIVILEGED_FUNCTION;
 
+#if configSUPPORT_DYNAMIC_ALLOC_HEAP == 7
+/* Toit cmpctmalloc: heap stats, iteration, and aligned allocation. */
+
+typedef struct {
+    size_t total_free_bytes;
+    size_t total_allocated_bytes;
+    size_t largest_free_block;
+    size_t minimum_free_bytes;
+    size_t allocated_blocks;
+    size_t free_blocks;
+    size_t total_blocks;
+    void  *lowest_address;
+    void  *highest_address;
+} heap_stats_t;
+
+#define ITERATE_ALL_ALLOCATIONS  2
+#define ITERATE_UNALLOCATED      4
+#define ITERATE_CUSTOM_TAGS      0x100
+
+typedef int (*tagged_memory_callback_t)(void *user_data, void *tag, void *allocation, size_t allocated_size);
+
+void vPortGetHeapStats(heap_stats_t *stats);
+void vPortIterateAllocations(void *user_data, void *tag,
+    tagged_memory_callback_t callback, uint32_t flags);
+void *pvPortMemalign(size_t alignment, size_t size);
+void vPortSetHeapTag(void *tag);
+void *vPortGetHeapTag(void);
+
+#endif /* configSUPPORT_DYNAMIC_ALLOC_HEAP == 7 */
+
 /*
  * Setup the hardware ready for the scheduler to take control.  This generally
  * sets up a tick interrupt and sets timers for the correct tick frequency.
