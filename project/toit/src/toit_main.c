@@ -6,7 +6,6 @@
 
 #include "common_api.h"
 #include "luat_rtos.h"
-#include "slpman.h"
 
 // Defined in src/toit_ec618.cc (the Toit VM library).
 extern void toit_start(void);
@@ -29,12 +28,3 @@ static void toit_task_init(void) {
 
 // Register at task init level 1 (runs after hardware and driver init).
 INIT_TASK_EXPORT(toit_task_init, "1");
-
-// Board-specific initialization.
-static void toit_hw_init(void) {
-  // Disable the sleep manager watchdog — without this the device reboots
-  // after ~27 seconds.
-  slpManAonWdtStop();
-}
-
-INIT_HW_EXPORT(toit_hw_init, "1");
