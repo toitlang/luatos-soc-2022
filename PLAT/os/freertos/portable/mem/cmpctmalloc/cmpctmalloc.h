@@ -18,9 +18,10 @@
 #define MALLOC_OPTION_THREAD_TAG 1
 
 // Flags for cmpct_iterate_tagged_memory_areas.
-#define ITERATE_ALL_ALLOCATIONS 2
-#define ITERATE_UNALLOCATED 4
-#define ITERATE_CUSTOM_TAGS 0x100
+// Use CMPCTMALLOC_ prefix to avoid clashing with top.h constants.
+#define CMPCTMALLOC_ITERATE_ALL  2
+#define CMPCTMALLOC_ITERATE_UNALLOC 4
+#define CMPCTMALLOC_ITERATE_CUSTOM_TAGS 0x100
 
 typedef struct multi_heap_info cmpct_heap_t;
 

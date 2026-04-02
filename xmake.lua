@@ -375,7 +375,18 @@ target(USER_PROJECT_NAME..".elf")
 	-- 	LD_BASE_FLAGS = " --specs=nano.specs " .. LD_BASE_FLAGS
 	-- end
 
-    if USER_PROJECT_NAME ~= 'luatos' and USER_PROJECT_NAME ~= 'toit' then
+    if USER_PROJECT_NAME == 'hello_uart' then
+        -- Minimal hello world for UART1 testing.
+        add_files(SDK_TOP .. "/interface/private_src/*.c",{public = true})
+        add_files(SDK_TOP .. "/thirdparty/mbedtls/library/*.c",{public = true})
+        add_files(SDK_TOP .. "/thirdparty/printf/*.c",{public = true})
+		add_files(SDK_TOP.."/thirdparty/fal/src/*.c",{public = true})
+        add_files(SDK_TOP.."/thirdparty/flashdb/src/*.c",{public = true})
+		add_files(SDK_TOP .. "/interface/src/*.c",{public = true})
+		add_files(SDK_TOP .. "/thirdparty/littlefs/**.c",{public = true})
+        add_files(SDK_TOP .. "/project/" .. USER_PROJECT_NAME .. "/src/bsp_custom.c",{public = true})
+        add_ldflags("-Wl,--allow-multiple-definition", {force = true})
+    elseif USER_PROJECT_NAME ~= 'luatos' and USER_PROJECT_NAME ~= 'toit' then
         add_files(SDK_TOP .. "/interface/private_src/*.c",{public = true})
         add_files(SDK_TOP .. "/thirdparty/mbedtls/library/*.c",{public = true})
         add_files(SDK_TOP .. "/thirdparty/printf/*.c",{public = true})
@@ -388,12 +399,14 @@ target(USER_PROJECT_NAME..".elf")
         -- Still need printf, littlefs, and interface sources.
         add_files(SDK_TOP .. "/interface/private_src/*.c",{public = true})
         add_files(SDK_TOP .. "/thirdparty/printf/*.c",{public = true})
-		add_files(SDK_TOP .. "/thirdparty/littlefs/**.c",{public = true})
-		add_files(SDK_TOP .. "/interface/src/*.c",{public = true})
+        add_files(SDK_TOP .. "/thirdparty/littlefs/**.c",{public = true})
+        add_files(SDK_TOP .. "/interface/src/*.c",{public = true})
         -- cmpctmalloc heap replaces heap_6 from libfreertos.a.
         add_includedirs(SDK_TOP .. "/PLAT/os/freertos/portable/mem/cmpctmalloc",{public = true})
         add_files(SDK_TOP .. "/PLAT/os/freertos/portable/mem/cmpctmalloc/cmpctmalloc.c",{public = true})
         add_files(SDK_TOP .. "/PLAT/os/freertos/src/heap_7.c",{public = true})
+        -- bsp_custom.c overrides the default BSP_CustomInit from libcore_airm2m.a.
+        add_files(SDK_TOP .. "/project/" .. USER_PROJECT_NAME .. "/src/bsp_custom.c",{public = true})
         add_ldflags("-Wl,--allow-multiple-definition", {force = true})
     else
         remove_files(SDK_TOP .. "/interface/src/luat_kv_ec618.c")

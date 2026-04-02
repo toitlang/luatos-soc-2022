@@ -746,7 +746,7 @@ extern void GosLogAssertInfo(UINT8 *pCond, UINT8 *pFile, UINT16 line, UINT32 var
 #endif
 
 #if( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
-	#define configSUPPORT_DYNAMIC_ALLOC_HEAP 7
+	#define configSUPPORT_DYNAMIC_ALLOC_HEAP 6
 #endif
 
 /* Sanity check the configuration. */

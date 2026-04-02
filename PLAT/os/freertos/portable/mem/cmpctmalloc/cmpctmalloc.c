@@ -30,8 +30,21 @@ typedef uintptr_t vaddr_t;
 #define dprintf(...) fprintf(__VA_ARGS__)
 #define INFO stdout
 
-#define MULTI_HEAP_LOCK(x) vTaskSuspendAll()
-#define MULTI_HEAP_UNLOCK(x) xTaskResumeAll()
+// Safe locking: before the scheduler starts, no locking is needed
+// (single-threaded context). After the scheduler starts, use
+// vTaskSuspendAll/xTaskResumeAll.
+static inline void multi_heap_lock(void) {
+    if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
+        vTaskSuspendAll();
+    }
+}
+static inline void multi_heap_unlock(void) {
+    if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
+        xTaskResumeAll();
+    }
+}
+#define MULTI_HEAP_LOCK(x) multi_heap_lock()
+#define MULTI_HEAP_UNLOCK(x) multi_heap_unlock()
 
 #define IRAM_ATTR
 

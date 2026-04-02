@@ -8,27 +8,14 @@
 #include "task.h"
 #include "portable.h"
 
-#if configSUPPORT_DYNAMIC_ALLOC_HEAP == 7
+// Always compiled for EC618 — shadows heap_6 at link time via
+// --allow-multiple-definition. We can't use configSUPPORT_DYNAMIC_ALLOC_HEAP==7
+// because the prebuilt libfreertos.a asserts it's 6.
+#if 1
 
 #include "cmpctmalloc.h"
 
-// The heap_stats_t and tagged_memory_callback_t types are declared in
-// portable.h under a configSUPPORT_DYNAMIC_ALLOC_HEAP==7 guard, but
-// portable.h is included by FreeRTOS.h before that macro is defined.
-// Declare them here directly.
-typedef struct {
-    size_t total_free_bytes;
-    size_t total_allocated_bytes;
-    size_t largest_free_block;
-    size_t minimum_free_bytes;
-    size_t allocated_blocks;
-    size_t free_blocks;
-    size_t total_blocks;
-    void  *lowest_address;
-    void  *highest_address;
-} heap_stats_t;
-
-typedef int (*tagged_memory_callback_t)(void*, void*, void*, size_t);
+// heap_stats_t and tagged_memory_callback_t are declared in portable.h.
 
 #include <string.h>
 #include <reent.h>
@@ -89,6 +76,11 @@ void *pvPortZeroAssertMalloc(size_t xWantedSize) {
 void *pvPortMemalign(size_t alignment, size_t size) {
     ensure_heap_initialized();
     return cmpct_aligned_alloc_impl(heap, size, alignment);
+}
+
+void *pvPortMemAlignMallocEC(size_t xWantedSize, unsigned int funcPtr) {
+    (void)funcPtr;
+    return pvPortMemalign(8, xWantedSize);
 }
 
 size_t xPortGetFreeHeapSize(void) {
@@ -165,8 +157,6 @@ void vPortIterateAllocations(void *user_data, void *tag,
     cmpct_iterate_tagged_memory_areas(heap, user_data, tag, callback, flags);
 }
 
-// --- Toit-specific: per-thread heap tag ---
-
 void vPortSetHeapTag(void *tag) {
     if (!heap_initialized) return;
     cmpct_set_option(heap, MALLOC_OPTION_THREAD_TAG, tag);
@@ -180,4 +170,4 @@ void *vPortGetHeapTag(void) {
 // The CMSIS-RTOS2 layer (cmsis_os2.o in libfreertos.a) already provides
 // these, and the --wrap flags handle the newlib _malloc_r/_free_r wrappers.
 
-#endif  // configSUPPORT_DYNAMIC_ALLOC_HEAP == 7
+#endif

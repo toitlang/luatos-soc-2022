@@ -143,7 +143,7 @@ size_t xPortGetMaximumFreeBlockSize( void ) PRIVILEGED_FUNCTION;
 uint8_t xPortGetFreeHeapPct( void ) PRIVILEGED_FUNCTION;
 uint8_t xPortIsFreeHeapOnAlert( void ) PRIVILEGED_FUNCTION;
 
-#if configSUPPORT_DYNAMIC_ALLOC_HEAP == 7
+#if 1  // Toit cmpctmalloc declarations (always available).
 /* Toit cmpctmalloc: heap stats, iteration, and aligned allocation. */
 
 typedef struct {
@@ -158,9 +158,11 @@ typedef struct {
     void  *highest_address;
 } heap_stats_t;
 
-#define ITERATE_ALL_ALLOCATIONS  2
-#define ITERATE_UNALLOCATED      4
-#define ITERATE_CUSTOM_TAGS      0x100
+// Use MALLOC_ prefix to match ESP-IDF convention and avoid clashing with
+// top.h's static const int ITERATE_* constants.
+#define MALLOC_ITERATE_ALL_ALLOCATIONS  2
+#define MALLOC_ITERATE_UNALLOCATED      4
+#define MALLOC_ITERATE_CUSTOM_TAGS      0x100
 
 typedef int (*tagged_memory_callback_t)(void *user_data, void *tag, void *allocation, size_t allocated_size);
 
@@ -171,7 +173,7 @@ void *pvPortMemalign(size_t alignment, size_t size);
 void vPortSetHeapTag(void *tag);
 void *vPortGetHeapTag(void);
 
-#endif /* configSUPPORT_DYNAMIC_ALLOC_HEAP == 7 */
+#endif
 
 /*
  * Setup the hardware ready for the scheduler to take control.  This generally

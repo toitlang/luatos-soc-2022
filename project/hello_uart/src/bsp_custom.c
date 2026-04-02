@@ -37,7 +37,7 @@ static void SetPrintUart(void) {
                           ARM_USART_PARITY_NONE |
                           ARM_USART_STOP_BITS_1 |
                           ARM_USART_FLOW_CONTROL_NONE,
-                          115200);
+                          921600);
     Driver_USART1.Control(ARM_USART_CONTROL_TX, 1);
 
     UsartPrintHandle = &Driver_USART1;

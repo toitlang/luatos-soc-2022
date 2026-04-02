@@ -11,7 +11,7 @@ target(TARGET_NAME)
 
     add_includedirs("./inc", {public = true})
     add_includedirs(SDK_TOP .. "/PLAT/os/freertos/portable/mem/cmpctmalloc", {public = true})
-    add_files("./src/*.c", {public = true})
+    add_files("./src/*.c|bsp_custom.c", {public = true})
 
     -- Link the project's own library.
     LIB_USER = LIB_USER .. SDK_TOP .. "/" .. LIB_DIR .. LIB_NAME .. " "
