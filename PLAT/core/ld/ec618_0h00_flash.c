@@ -126,7 +126,10 @@ SECTIONS
    *(.exceptCheck)
   } >ASMB_AREA
 
-  /* Toit RTC memory: preserved across deep sleep (not zeroed on warm boot). */
+  /* Toit RTC memory: placed after the ZI limit markers in ASMB.
+     NOTE: On EC618, ASMB content does NOT survive SLP2 or HIBERNATE
+     despite being in a (NOLOAD) section. The SLP2 save/restore
+     mechanism corrupts this region. RTC persistence requires flash. */
   .toit_rtc_noinit (NOLOAD):
   {
     . = ALIGN(4);
@@ -138,7 +141,7 @@ SECTIONS
   {
 
   } >ASMB_AREA
-  
+
   .load_rrcmem 0xB000 (NOLOAD):
   {
     *(.rrcMem)
