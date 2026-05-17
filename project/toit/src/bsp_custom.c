@@ -9,10 +9,40 @@
 #include "bsp_custom.h"
 #include "clock.h"
 #include "slpman.h"
+#include "plat_config.h"
 
 #include "Driver_USART.h"
 
+#if CONFIG_TOIT_EC618_DISABLE_UNILOG
+// Defined in the prebuilt PLAT library — turns off the bottom-level UART0
+// log so the controller can be repurposed.
+extern void soc_uart0_set_log_off(uint8_t is_off);
+#endif
+
+extern ARM_DRIVER_USART Driver_USART0;
 extern ARM_DRIVER_USART Driver_USART1;
+extern ARM_DRIVER_USART Driver_USART2;
+
+#if CONFIG_TOIT_EC618_PRINT_UART
+
+#if CONFIG_TOIT_EC618_PRINT_UART_ID == 0
+#  define TOIT_PRINT_UART_DRIVER Driver_USART0
+#  define TOIT_PRINT_UART_CLOCK  FCLK_UART0
+#  define TOIT_PRINT_UART_CLKSRC FCLK_UART0_SEL_26M
+#  define TOIT_PRINT_UART_RESET  RST_FCLK_UART0
+#elif CONFIG_TOIT_EC618_PRINT_UART_ID == 1
+#  define TOIT_PRINT_UART_DRIVER Driver_USART1
+#  define TOIT_PRINT_UART_CLOCK  FCLK_UART1
+#  define TOIT_PRINT_UART_CLKSRC FCLK_UART1_SEL_26M
+#  define TOIT_PRINT_UART_RESET  RST_FCLK_UART1
+#elif CONFIG_TOIT_EC618_PRINT_UART_ID == 2
+#  define TOIT_PRINT_UART_DRIVER Driver_USART2
+#  define TOIT_PRINT_UART_CLOCK  FCLK_UART2
+#  define TOIT_PRINT_UART_CLKSRC FCLK_UART2_SEL_26M
+#  define TOIT_PRINT_UART_RESET  RST_FCLK_UART2
+#else
+#  error "CONFIG_TOIT_EC618_PRINT_UART_ID must be 0, 1 or 2"
+#endif
 
 // Newlib _write syscall: bridges printf -> io_putchar -> UART SendPolling.
 extern int io_putchar(int ch);
@@ -26,29 +56,56 @@ int _write(int file, char *ptr, int len) {
 }
 
 static void SetPrintUart(void) {
-    GPR_setClockSrc(FCLK_UART1, FCLK_UART1_SEL_26M);
-    GPR_clockEnable(FCLK_UART1);
-    GPR_swReset(RST_FCLK_UART1);
+    GPR_setClockSrc(TOIT_PRINT_UART_CLOCK, TOIT_PRINT_UART_CLKSRC);
+    GPR_clockEnable(TOIT_PRINT_UART_CLOCK);
+    GPR_swReset(TOIT_PRINT_UART_RESET);
 
-    Driver_USART1.Initialize(NULL);
-    Driver_USART1.PowerControl(ARM_POWER_FULL);
-    Driver_USART1.Control(ARM_USART_MODE_ASYNCHRONOUS |
-                          ARM_USART_DATA_BITS_8 |
-                          ARM_USART_PARITY_NONE |
-                          ARM_USART_STOP_BITS_1 |
-                          ARM_USART_FLOW_CONTROL_NONE,
-                          115200);
-    Driver_USART1.Control(ARM_USART_CONTROL_TX, 1);
+    TOIT_PRINT_UART_DRIVER.Initialize(NULL);
+    TOIT_PRINT_UART_DRIVER.PowerControl(ARM_POWER_FULL);
+    TOIT_PRINT_UART_DRIVER.Control(ARM_USART_MODE_ASYNCHRONOUS |
+                                   ARM_USART_DATA_BITS_8 |
+                                   ARM_USART_PARITY_NONE |
+                                   ARM_USART_STOP_BITS_1 |
+                                   ARM_USART_FLOW_CONTROL_NONE,
+                                   CONFIG_TOIT_EC618_PRINT_UART_BAUD);
+    TOIT_PRINT_UART_DRIVER.Control(ARM_USART_CONTROL_TX, 1);
 
-    UsartPrintHandle = &Driver_USART1;
+    UsartPrintHandle = &TOIT_PRINT_UART_DRIVER;
 }
+
+#else  // CONFIG_TOIT_EC618_PRINT_UART
+
+// Print redirect disabled: keep printf output wherever the PLAT put it
+// (unilog / USB CDC / ...). We still provide a _write stub so newlib
+// doesn't drag in the default one.
+int _write(int file, char *ptr, int len) {
+    (void)file;
+    (void)ptr;
+    return len;
+}
+
+#endif  // CONFIG_TOIT_EC618_PRINT_UART
 
 void BSP_CustomInit(void) {
     slpManAonWdtStop();
+
+#if CONFIG_TOIT_EC618_DISABLE_UNILOG
+    // Silence the PLAT debug log stream. soc_uart0_set_log_off(1) detaches
+    // the bottom-level driver from UART0 so the controller is free for our
+    // use; setting LOG_CONTROL=0 stops the unilog scheduler from doing
+    // background work even when no UART is wired up.
+    soc_uart0_set_log_off(1);
+    BSP_SetPlatConfigItemValue(PLAT_CONFIG_ITEM_LOG_CONTROL, 0);
+#endif
+
+#if CONFIG_TOIT_EC618_PRINT_UART
     SetPrintUart();
     setvbuf(stdout, NULL, _IONBF, 0);
 
     // Test: write directly via SendPolling (synchronous).
     const char *msg = "[toit] BSP_CustomInit reached\r\n";
     UsartPrintHandle->SendPolling((const uint8_t*)msg, 31);
+#else
+    setvbuf(stdout, NULL, _IONBF, 0);
+#endif
 }
