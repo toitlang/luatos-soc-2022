@@ -106,6 +106,22 @@ void BSP_CustomInit(void) {
     const char *msg = "[toit] BSP_CustomInit reached\r\n";
     UsartPrintHandle->SendPolling((const uint8_t*)msg, 31);
 #else
+    // Print redirect disabled. With no SetPrintUart() and nothing else
+    // referencing the CMSIS USART driver, the linker (--gc-sections)
+    // drops Driver_USART* and everything reachable from them — including
+    // the per-controller USARTx_IRQHandler symbols that live in the same
+    // bsp_usart.c TU. Something in the precompiled PLAT path then ends
+    // up dispatching a UART interrupt (likely UART0, left in a
+    // half-initialised state by the bootROM / bootloader) to an
+    // undefined handler, hard-faulting the AP and locking the device in
+    // a cold-boot loop.
+    //
+    // Force-link Driver_USART2 to keep the whole driver TU alive. The
+    // address is stored in a volatile pointer so the compiler can't
+    // optimise the reference away; we never actually use the driver.
+    static ARM_DRIVER_USART * volatile keep_usart_driver_linked_ = &Driver_USART2;
+    (void)keep_usart_driver_linked_;
+
     setvbuf(stdout, NULL, _IONBF, 0);
 #endif
 }
