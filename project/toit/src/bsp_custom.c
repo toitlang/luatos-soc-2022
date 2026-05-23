@@ -68,6 +68,12 @@ static void SetPrintUart(void) {
                                    ARM_USART_STOP_BITS_1 |
                                    ARM_USART_FLOW_CONTROL_NONE,
                                    CONFIG_TOIT_EC618_PRINT_UART_BAUD);
+    // Best-effort mitigation for the UART1-cold-boot garbage described in
+    // toolchains/ec618/ec618_config.h: drop any bytes that were already
+    // in the controller's TX path. Reduces the count from many to one;
+    // we have not found a way to kill the remaining shift-register byte
+    // from software.
+    TOIT_PRINT_UART_DRIVER.Control(ARM_USART_ABORT_SEND, 0);
     TOIT_PRINT_UART_DRIVER.Control(ARM_USART_CONTROL_TX, 1);
 
     UsartPrintHandle = &TOIT_PRINT_UART_DRIVER;
