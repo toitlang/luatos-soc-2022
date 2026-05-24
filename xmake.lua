@@ -396,6 +396,10 @@ target(USER_PROJECT_NAME..".elf")
         add_files(SDK_TOP .. "/PLAT/os/freertos/src/heap_7.c",{public = true})
         -- bsp_custom.c overrides the default BSP_CustomInit from libcore_airm2m.a.
         add_files(SDK_TOP .. "/project/" .. USER_PROJECT_NAME .. "/src/bsp_custom.c",{public = true})
+        -- sys_ro_override.c overrides sysROSpaceCheck from libstartup.a, and
+        -- exports the toit_ap_image_modify_{start,end} window the OTA commit
+        -- step uses to write into the AP image area.
+        add_files(SDK_TOP .. "/project/" .. USER_PROJECT_NAME .. "/src/sys_ro_override.c",{public = true})
         add_ldflags("-Wl,--allow-multiple-definition", {force = true})
     else
         remove_files(SDK_TOP .. "/interface/src/luat_kv_ec618.c")
