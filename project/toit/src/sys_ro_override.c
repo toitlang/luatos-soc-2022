@@ -8,6 +8,17 @@
 // this definition takes precedence over the one in libstartup.a.
 
 #include <stdint.h>
+#include <assert.h>
+
+#include "mem_map.h"
+
+// AP_IMAGE_END below assumes __USER_CODE__ is defined, which gives
+// AP_FLASH_LOAD_SIZE = 0x2E0000. If a future build drops that flag,
+// AP_FLASH_LOAD_SIZE shrinks to 0x280000 and the 384 KB reserved area
+// between 0x2A4000 and 0x304000 would silently fall outside the AP-image
+// guard and become writable here. Fail the build before that happens.
+_Static_assert(AP_FLASH_LOAD_SIZE == 0x2E0000,
+               "sys_ro_override.c hard-codes AP_IMAGE_END assuming __USER_CODE__");
 
 // Writable window for flash operations. Set these before performing
 // flash writes to regions inside the AP image area (flash registry, OTA).
