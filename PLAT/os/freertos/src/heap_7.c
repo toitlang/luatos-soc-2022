@@ -131,6 +131,19 @@ void *__wrap__realloc_r(struct _reent *r, void *ptr, size_t size) {
     return pvPortReallocEC(ptr, size, 0);
 }
 
+// newlib's _memalign_r over-allocates via _malloc_r and then tries to
+// split the chunk by reading and rewriting a newlib-style chunk header.
+// cmpctmalloc has no such header, so _memalign_r ends up reading garbage
+// at the would-be header offset — sometimes a benign-looking pointer
+// (silent heap corruption that bites later), sometimes an unmapped
+// address (immediate bus fault). Route every caller — aligned_alloc,
+// memalign, posix_memalign, valloc, pvalloc — at cmpct's aligned-alloc
+// implementation instead.
+void *__wrap__memalign_r(struct _reent *r, size_t alignment, size_t size) {
+    (void)r;
+    return pvPortMemalign(alignment, size);
+}
+
 // --- Toit-specific: heap stats and iteration ---
 
 void vPortGetHeapStats(heap_stats_t *stats) {
