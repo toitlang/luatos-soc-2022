@@ -179,6 +179,10 @@ extern void *__real_xTaskCreate;
 extern void *__real_xTaskGetCurrentTaskHandle;
 extern void *__real_xTaskNotifyWait;
 
+// Placed at a fixed flash address (see ec618_0h00_flash.c, .jt_data
+// section) so dual-linked VM slots resolve to the same g_plat_jt[]
+// regardless of which slot's image they were linked from.
+__attribute__((section(".jt_data"), used))
 void *const g_plat_jt[PLAT_JT_COUNT] = {
     [PLAT_JT_BSP_QSPI_Erase_Safe] = &__real_BSP_QSPI_Erase_Safe,
     [PLAT_JT_BSP_QSPI_Read_Safe] = &__real_BSP_QSPI_Read_Safe,

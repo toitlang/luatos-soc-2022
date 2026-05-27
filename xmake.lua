@@ -627,6 +627,11 @@ target(USER_PROJECT_NAME..".elf")
         if USER_PROJECT_NAME == "luatos" then
             FLAGS = FLAGS .. " -D__LUATOS__ -DFLASH_AREA_SIZE=" .. string.format("%dK", 2944 - LUAT_SCRIPT_SIZE - LUAT_SCRIPT_OTA_SIZE)
         end
+        -- Toit dual-slot OTA: TOIT_VM_SLOT_B=1 produces the slot-B link
+        -- pass that places the VM at .vm_b instead of .vm_a.
+        if os.getenv("TOIT_VM_SLOT_B") == "1" then
+            FLAGS = FLAGS .. " -DTOIT_VM_SLOT_B"
+        end
         os.exec(GCC_DIR .. "bin/arm-none-eabi-gcc -E " .. FLAGS .. " -I " .. SDK_PATH .. "/PLAT/device/target/board/ec618_0h00/common/inc" .. " -P " .. SDK_PATH .. "/PLAT/core/ld/ec618_0h00_flash.c" ..  " -o " .. SDK_PATH .. "/PLAT/core/ld/ec618_0h00_flash.ld")
         
     end)

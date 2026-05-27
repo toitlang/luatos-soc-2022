@@ -271,11 +271,13 @@ SECTIONS
     Load$$LOAD_DRAM_SHARED$$Base = LOADADDR(.load_dram_shared);
     Image$$LOAD_DRAM_SHARED$$Base = .;
     *(.data*)
-    /* C++ static initializers — needed for Toit VM globals. */
+    /* C++ static initializers — PLAT-side only here. VM constructors are
+     * captured into the active slot and run by run_static_initializers()
+     * in src/toit_ec618.cc against __vm_init_array_start/__vm_init_array_end. */
     . = ALIGN(4);
     __init_array_start = .;
-    KEEP (*(SORT(.init_array.*)))
-    KEEP (*(.init_array*))
+    KEEP (EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(SORT(.init_array.*)))
+    KEEP (EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(.init_array*))
     __init_array_end = .;
     . = ALIGN(4);
   } >MSMB_AREA AT>FLASH_AREA
@@ -309,10 +311,35 @@ SECTIONS
   ASSERT(heap_size>=min_heap_size_threshold,"ap use too much ram, heap less than min_heap_size_threshold!")
   ASSERT(end_up_buffer<=MSMB_APMEM_END_ADDR,"ap use too much ram, exceed to MSMB_APMEM_END_ADDR")
 
+  /*
+   * Dual-slot OTA layout (Toit fork).
+   *
+   *   0x848000-0x990000 : PLAT .text  (~1.27 MB used, ~50 KB headroom)
+   *   0x990000-0x991000 : .jt_data    (4 KB, fixed addr for jump table; lives inside PLAT objects)
+   *   0x991000-0x9F1000 : .vm_a       (384 KB, slot A)
+   *   0x9F1000-0xA51000 : .vm_b       (384 KB, slot B, reserved)
+   *   0xA51000-0xA52000 : .slot_marker (4 KB, one sector — active-slot byte)
+   *   0xA52000-0xAA4000 : extension   (~328 KB)
+   *
+   * The VM (libtoit_vm.a + mbedtls) and the .vm_entry pointer are picked
+   * into .vm_a (default build) or .vm_b (slot-B build, selected with
+   * -DTOIT_VM_SLOT_B). PLAT objects fall through into .text. The two
+   * link passes are spliced together at the binary level to produce a
+   * single image with both slots populated.
+   */
+#define TOIT_VM_A_ORIGIN  0x00991000
+#define TOIT_VM_B_ORIGIN  0x009F1000
+#define TOIT_VM_SLOT_SIZE 0x00060000
+#define TOIT_JT_ORIGIN    0x00990000
+#define TOIT_JT_SIZE      0x00001000
+#define TOIT_SLOT_MARKER_ORIGIN 0x00A51000
+#define TOIT_SLOT_MARKER_SIZE   0x00001000
+#define TOIT_PLAT_TEXT_LIMIT TOIT_JT_ORIGIN
+
   .text :
   {
-    *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
-    *(.text*)
+    EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(.rodata*)
+    EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(.text*)
     *(.glue_7)
     *(.glue_7t)
     *(.vfpll_veneer)
@@ -332,7 +359,7 @@ SECTIONS
       KEEP (*(.preinit_fun_array*))
       __preinit_fun_array_end = .;
       . = ALIGN(4);
-  } > FLASH_AREA   
+  } > FLASH_AREA
   .drv_init_fun_array :
   {
       . = ALIGN(4);
@@ -342,7 +369,7 @@ SECTIONS
       __drv_init_fun_array_end = .;
       . = ALIGN(4);
   } > FLASH_AREA
-  
+
   .task_fun_array :
   {
       . = ALIGN(4);
@@ -352,6 +379,110 @@ SECTIONS
       __task_fun_array_end = .;
       . = ALIGN(4);
   } > FLASH_AREA
+
+  ASSERT(. <= TOIT_PLAT_TEXT_LIMIT,
+         "PLAT region overflowed into VM slot A; reduce PLAT or move TOIT_VM_A_ORIGIN.")
+
+  /* Jump-table data at fixed flash address. plat_jt.o annotates the
+   * g_plat_jt[] array with __attribute__((section(".jt_data"))). The
+   * table lives here (inside the PLAT region textually, but the address
+   * is fixed so both VM_A and VM_B see g_plat_jt[] at the same XIP
+   * address regardless of which link pass produced them).
+   *
+   * Each fixed-address section uses an explicit `addr :` prefix so the
+   * linker plants it at the configured flash offset; the bare `>FLASH_AREA`
+   * form keys off FLASH_AREA's running location counter, which would
+   * stack the slots back-to-back at the end of PLAT.
+   */
+  .jt_data TOIT_JT_ORIGIN :
+  {
+    __jt_data_start = .;
+    KEEP(*(.jt_data))
+    __jt_data_end = .;
+  } >FLASH_AREA
+
+  ASSERT(__jt_data_end - __jt_data_start <= TOIT_JT_SIZE,
+         "Jump-table section .jt_data exceeded TOIT_JT_SIZE")
+
+  .vm_a TOIT_VM_A_ORIGIN :
+  {
+    __vm_a_start = .;
+#ifndef TOIT_VM_SLOT_B
+    KEEP(*(.vm_entry))
+    /* VM-side C++ static initializers live inside the slot so each slot
+     * is self-contained. run_static_initializers() in src/toit_ec618.cc
+     * iterates __vm_init_array_*. Writable VM .data still lives in
+     * .load_dram_shared (PLAT loads it from flash to RAM at startup);
+     * .data values are slot-agnostic for the current VM where const
+     * tables are in .rodata and writable globals don't bake in
+     * slot-specific pointers. */
+    . = ALIGN(4);
+    __vm_init_array_start = .;
+    KEEP(*libtoit_vm.a:*(SORT(.init_array.*)))
+    KEEP(*libtoit_vm.a:*(.init_array*))
+    KEEP(*libmbedtls.a:*(SORT(.init_array.*)))
+    KEEP(*libmbedtls.a:*(.init_array*))
+    KEEP(*libmbedx509.a:*(SORT(.init_array.*)))
+    KEEP(*libmbedx509.a:*(.init_array*))
+    KEEP(*libmbedcrypto.a:*(SORT(.init_array.*)))
+    KEEP(*libmbedcrypto.a:*(.init_array*))
+    __vm_init_array_end = .;
+    *libtoit_vm.a:*(.rodata*)
+    *libtoit_vm.a:*(.text*)
+    *libmbedtls.a:*(.rodata*)
+    *libmbedtls.a:*(.text*)
+    *libmbedx509.a:*(.rodata*)
+    *libmbedx509.a:*(.text*)
+    *libmbedcrypto.a:*(.rodata*)
+    *libmbedcrypto.a:*(.text*)
+#endif
+    __vm_a_end = .;
+  } >FLASH_AREA
+
+#ifndef TOIT_VM_SLOT_B
+  ASSERT(__vm_a_end - __vm_a_start <= TOIT_VM_SLOT_SIZE,
+         "VM slot A overflowed TOIT_VM_SLOT_SIZE")
+#endif
+
+  .vm_b TOIT_VM_B_ORIGIN :
+  {
+    __vm_b_start = .;
+#ifdef TOIT_VM_SLOT_B
+    KEEP(*(.vm_entry))
+    . = ALIGN(4);
+    __vm_init_array_start = .;
+    KEEP(*libtoit_vm.a:*(SORT(.init_array.*)))
+    KEEP(*libtoit_vm.a:*(.init_array*))
+    KEEP(*libmbedtls.a:*(SORT(.init_array.*)))
+    KEEP(*libmbedtls.a:*(.init_array*))
+    KEEP(*libmbedx509.a:*(SORT(.init_array.*)))
+    KEEP(*libmbedx509.a:*(.init_array*))
+    KEEP(*libmbedcrypto.a:*(SORT(.init_array.*)))
+    KEEP(*libmbedcrypto.a:*(.init_array*))
+    __vm_init_array_end = .;
+    *libtoit_vm.a:*(.rodata*)
+    *libtoit_vm.a:*(.text*)
+    *libmbedtls.a:*(.rodata*)
+    *libmbedtls.a:*(.text*)
+    *libmbedx509.a:*(.rodata*)
+    *libmbedx509.a:*(.text*)
+    *libmbedcrypto.a:*(.rodata*)
+    *libmbedcrypto.a:*(.text*)
+#endif
+    __vm_b_end = .;
+  } >FLASH_AREA
+
+#ifdef TOIT_VM_SLOT_B
+  ASSERT(__vm_b_end - __vm_b_start <= TOIT_VM_SLOT_SIZE,
+         "VM slot B overflowed TOIT_VM_SLOT_SIZE")
+#endif
+
+  .slot_marker TOIT_SLOT_MARKER_ORIGIN :
+  {
+    __slot_marker_start = .;
+    KEEP(*(.slot_marker))
+    __slot_marker_end = .;
+  } >FLASH_AREA
 
   PROVIDE(totalFlashLimit = .);
 

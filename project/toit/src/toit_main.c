@@ -1,19 +1,47 @@
 // Copyright (C) 2026 Toit contributors.
 //
-// Entry point for the Toit runtime on EC618. This file is compiled by
-// the PLAT SDK's build system and uses the INIT_TASK_EXPORT macro to
-// register the Toit startup task during system boot.
+// Entry point for the Toit runtime on EC618. Reads the active-slot byte
+// from .slot_marker, then tail-calls through the slot's .vm_entry
+// pointer. Each VM slot's first word is a function pointer to its own
+// toit_start; that decoupling is what makes dual-linked A/B slots work
+// without a fixed-offset entry symbol inside the slot.
 
+#include <stdint.h>
 #include "common_api.h"
 #include "luat_rtos.h"
 
-// Defined in src/toit_ec618.cc (the Toit VM library).
-extern void toit_start(void);
+// Slot-marker byte at fixed flash address (see ec618_0h00_flash.c). A
+// fresh build initialises it to 'A'; the OTA path erases the marker
+// sector and writes 'B' to switch slots on next boot. Erased flash
+// reads 0xFF, which we treat as "default slot A".
+__attribute__((section(".slot_marker"), used))
+const volatile uint8_t toit_active_slot = 'A';
+
+// Linker-script symbols marking the slot base addresses. Declared as
+// arrays so referring to them yields their address (the slot's first
+// flash word), not the bytes at that address.
+extern uint32_t __vm_a_start[];
+extern uint32_t __vm_b_start[];
+
+typedef void (*toit_start_fn)(void);
 
 static luat_rtos_task_handle toit_task_handle;
 
 static void toit_task(void *param) {
-  toit_start();
+  uint8_t slot = toit_active_slot;
+  const uint32_t *slot_base;
+  if (slot == 'B') {
+    slot_base = __vm_b_start;
+    printf("[toit] INFO: booting VM slot B\n");
+  } else {
+    slot_base = __vm_a_start;
+    printf("[toit] INFO: booting VM slot A\n");
+  }
+  // The slot's first word is a function pointer (.vm_entry, written by
+  // the VM build). The Thumb bit is already set in the linker
+  // relocation, so a plain indirect call lands in toit_start.
+  toit_start_fn entry = (toit_start_fn)slot_base[0];
+  entry();
   // toit_start() does not return in normal operation (enters deep sleep).
   // If it does return, halt.
   while (1) {
