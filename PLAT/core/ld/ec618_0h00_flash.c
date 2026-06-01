@@ -318,8 +318,9 @@ SECTIONS
    *   0x990000-0x991000 : .jt_data    (4 KB, fixed addr for jump table; lives inside PLAT objects)
    *   0x991000-0x9F1000 : .vm_a       (384 KB, slot A)
    *   0x9F1000-0xA51000 : .vm_b       (384 KB, slot B, reserved)
-   *   0xA51000-0xA52000 : .slot_marker (4 KB, one sector — active-slot byte)
-   *   0xA52000-0xAA4000 : extension   (~328 KB)
+   *   0xA51000-0xA53000 : .slot_marker (8 KB, two sectors — power-fail-safe
+   *                                     active-slot record, ping-ponged)
+   *   0xA53000-...      : extension   (start derived from the AP binary size)
    *
    * The VM (libtoit_vm.a + mbedtls) and the .vm_entry pointer are picked
    * into .vm_a (default build) or .vm_b (slot-B build, selected with
@@ -333,7 +334,7 @@ SECTIONS
 #define TOIT_JT_ORIGIN    0x00990000
 #define TOIT_JT_SIZE      0x00001000
 #define TOIT_SLOT_MARKER_ORIGIN 0x00A51000
-#define TOIT_SLOT_MARKER_SIZE   0x00001000
+#define TOIT_SLOT_MARKER_SIZE   0x00002000  /* two 4 KB sectors, ping-ponged */
 #define TOIT_PLAT_TEXT_LIMIT TOIT_JT_ORIGIN
 
   .text :
@@ -481,8 +482,17 @@ SECTIONS
   {
     __slot_marker_start = .;
     KEEP(*(.slot_marker))
+    /* Reserve both sectors so the AP binary spans the full marker region;
+     * the extension (appended after the binary) therefore starts past
+     * sector 1, leaving the ping-pong's second sector free to be written.
+     * Fresh contents read as "no valid record" → the dispatcher boots
+     * slot A (see slot_marker_read). */
+    . = __slot_marker_start + TOIT_SLOT_MARKER_SIZE;
     __slot_marker_end = .;
   } >FLASH_AREA
+
+  ASSERT(__slot_marker_end - __slot_marker_start == TOIT_SLOT_MARKER_SIZE,
+         "slot marker region must reserve exactly TOIT_SLOT_MARKER_SIZE")
 
   PROVIDE(totalFlashLimit = .);
 
