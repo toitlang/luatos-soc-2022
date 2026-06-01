@@ -340,7 +340,11 @@ SECTIONS
   .text :
   {
     EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(.rodata*)
-    EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(.text*)
+    /* plat_jt.o's __wrap_* stubs go INTO each VM slot (below) so the VM's
+     * BL into them is a within-slot call that moves with the slot — that's
+     * what makes the slot-A and slot-B images byte-identical in the call
+     * sites (position independence). Its g_plat_jt[] stays in .jt_data. */
+    EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a *plat_jt.o) *(.text*)
     *(.glue_7)
     *(.glue_7t)
     *(.vfpll_veneer)
@@ -410,6 +414,8 @@ SECTIONS
     __vm_a_start = .;
 #ifndef TOIT_VM_SLOT_B
     KEEP(*(.vm_entry))
+    /* PLAT jump-table stubs live inside the slot (see .text comment). */
+    *plat_jt.o(.text*)
     /* VM-side C++ static initializers live inside the slot so each slot
      * is self-contained. run_static_initializers() in src/toit_ec618.cc
      * iterates __vm_init_array_*. Writable VM .data still lives in
@@ -450,6 +456,8 @@ SECTIONS
     __vm_b_start = .;
 #ifdef TOIT_VM_SLOT_B
     KEEP(*(.vm_entry))
+    /* PLAT jump-table stubs live inside the slot (see .text comment). */
+    *plat_jt.o(.text*)
     . = ALIGN(4);
     __vm_init_array_start = .;
     KEEP(*libtoit_vm.a:*(SORT(.init_array.*)))
