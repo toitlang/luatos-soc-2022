@@ -589,6 +589,12 @@ target(USER_PROJECT_NAME..".elf")
         -- step uses to write into the AP image area.
         add_files(SDK_TOP .. "/project/" .. USER_PROJECT_NAME .. "/src/sys_ro_override.c",{public = true})
         add_ldflags("-Wl,--allow-multiple-definition", {force = true})
+        -- Dual-slot OTA: retain input relocations in toit.elf so
+        -- tools/ec618/gen-slot-reloc.toit can extract the slot's
+        -- relocation table (R_ARM_ABS32 data pointers + the __wrap_time
+        -- branch) for relocate-on-write. objcopy -O binary drops the
+        -- relocation sections, so ap.bin is unaffected.
+        add_ldflags("-Wl,--emit-relocs", {force = true})
     else
         remove_files(SDK_TOP .. "/interface/src/luat_kv_ec618.c")
     end
