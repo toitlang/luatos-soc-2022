@@ -16,7 +16,9 @@ MEMORY
   FLASH_AREA(rx)              : ORIGIN = 0x00824000, LENGTH = 2212K         /* 2212K */
 #endif
 #else
-  FLASH_AREA(rx)              : ORIGIN = 0x00824000, LENGTH = 2944K         /* 2944K */
+  /* Toit: 3072K reaches the 768 KB slot B + marker (ends 0xB13000), reclaiming
+   * the dead FOTA region; stays below LittleFS (0xB84000) and the FDB. */
+  FLASH_AREA(rx)              : ORIGIN = 0x00824000, LENGTH = 3072K         /* 3072K */
 #endif
 }
 
@@ -312,28 +314,32 @@ SECTIONS
   ASSERT(end_up_buffer<=MSMB_APMEM_END_ADDR,"ap use too much ram, exceed to MSMB_APMEM_END_ADDR")
 
   /*
-   * Dual-slot OTA layout (Toit fork).
+   * Dual-slot OTA layout (Toit fork). Each VM slot is 768 KB, reclaiming the
+   * dead LuatOS FOTA region (0xB04000-0xB84000, unused by Toit and removed when
+   * the FOTA copy-back was deleted). The LittleFS (0xB84000) and FDB / flash
+   * registry (0xBCC000, used by Toit) above stay untouched.
    *
    *   0x848000-0x990000 : PLAT .text  (~1.27 MB used, ~50 KB headroom)
    *   0x990000-0x991000 : .jt_data    (4 KB, fixed addr for jump table; lives inside PLAT objects)
-   *   0x991000-0x9F1000 : .vm_a       (384 KB, slot A)
-   *   0x9F1000-0xA51000 : .vm_b       (384 KB, slot B, reserved)
-   *   0xA51000-0xA53000 : .slot_marker (8 KB, two sectors — power-fail-safe
+   *   0x991000-0xA51000 : .vm_a       (768 KB, slot A)
+   *   0xA51000-0xB11000 : .vm_b       (768 KB, slot B)
+   *   0xB11000-0xB13000 : .slot_marker (8 KB, two sectors — power-fail-safe
    *                                     active-slot record, ping-ponged)
-   *   0xA53000-...      : extension   (start derived from the AP binary size)
+   *   0xB13000-0xB84000 : free        (reclaimed FOTA region)
    *
-   * The VM (libtoit_vm.a + mbedtls) and the .vm_entry pointer are picked
-   * into .vm_a (default build) or .vm_b (slot-B build, selected with
-   * -DTOIT_VM_SLOT_B). PLAT objects fall through into .text. The two
-   * link passes are spliced together at the binary level to produce a
-   * single image with both slots populated.
+   * The VM (libtoit_vm.a + mbedtls), the bundled extension (containers + config),
+   * and the .vm_entry pointer are linked once at .vm_a (or .vm_b for the slot-B
+   * byte-identity oracle, -DTOIT_VM_SLOT_B). PLAT objects fall through into
+   * .text. The single position-independent image is RELOCATED to whichever slot
+   * the device writes (relocate-on-write OTA); the slot-B link survives only as
+   * the build-time byte-identity check.
    */
 #define TOIT_VM_A_ORIGIN  0x00991000
-#define TOIT_VM_B_ORIGIN  0x009F1000
-#define TOIT_VM_SLOT_SIZE 0x00060000
+#define TOIT_VM_B_ORIGIN  0x00A51000
+#define TOIT_VM_SLOT_SIZE 0x000C0000
 #define TOIT_JT_ORIGIN    0x00990000
 #define TOIT_JT_SIZE      0x00001000
-#define TOIT_SLOT_MARKER_ORIGIN 0x00A51000
+#define TOIT_SLOT_MARKER_ORIGIN 0x00B11000
 #define TOIT_SLOT_MARKER_SIZE   0x00002000  /* two 4 KB sectors, ping-ponged */
 #define TOIT_PLAT_TEXT_LIMIT TOIT_JT_ORIGIN
 
