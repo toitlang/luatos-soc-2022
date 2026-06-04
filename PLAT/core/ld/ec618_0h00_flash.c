@@ -337,6 +337,18 @@ SECTIONS
 #define TOIT_VM_A_ORIGIN  0x00991000
 #define TOIT_VM_B_ORIGIN  0x00A51000
 #define TOIT_VM_SLOT_SIZE 0x000C0000
+/* Neutral link base for the position-independent VM image. The image is LINKED
+ * here (a VMA that is NEITHER slot) and RELOCATED to whichever slot it is
+ * written to — INCLUDING slot A (LMA below = slot A via AT). Decoupling the link
+ * base from the slot flash address means BOTH slots get a non-zero relocation
+ * delta, so the slot-A relocation path is exercised for real (not a same-base
+ * no-op) and a missed relocation faults on slot-A boot, not only after a B->A
+ * OTA. Picked a round 16 MB: above the 3 MB FLASH_AREA (ends 0xB24000) and
+ * outside every mapped region (a stray un-relocated pointer faults loudly), yet
+ * within +-16 MB of PLAT so the one escaping VM->PLAT branch (__wrap_time) still
+ * encodes at link time. To make slot A canonical again, set this to
+ * TOIT_VM_A_ORIGIN. */
+#define TOIT_VM_LINK_BASE 0x01000000
 #define TOIT_JT_ORIGIN    0x00990000
 #define TOIT_JT_SIZE      0x00001000
 #define TOIT_SLOT_MARKER_ORIGIN 0x00B11000
@@ -415,9 +427,13 @@ SECTIONS
   ASSERT(__jt_data_end - __jt_data_start <= TOIT_JT_SIZE,
          "Jump-table section .jt_data exceeded TOIT_JT_SIZE")
 
-  .vm_a TOIT_VM_A_ORIGIN :
+  /* Linked at the neutral TOIT_VM_LINK_BASE (VMA), loaded into slot A's flash
+   * region (LMA, via AT). __vm_link_base/__vm_link_end are the link-domain (VMA)
+   * markers gen-slot-reloc relocates FROM; __vm_a_start/__vm_a_end stay the slot
+   * flash geometry the device dispatcher and relocate targets use. */
+  .vm_a TOIT_VM_LINK_BASE : AT (TOIT_VM_A_ORIGIN)
   {
-    __vm_a_start = .;
+    __vm_link_base = .;
 #ifndef TOIT_VM_SLOT_B
     KEEP(*(.vm_entry))
     /* PLAT jump-table stubs live inside the slot (see .text comment). */
@@ -449,8 +465,13 @@ SECTIONS
     *libmbedcrypto.a:*(.rodata*)
     *libmbedcrypto.a:*(.text*)
 #endif
-    __vm_a_end = .;
-  } >FLASH_AREA
+    __vm_link_end = .;
+  }
+  /* Slot A flash geometry: where the (relocated) slot-A image physically lives.
+   * Kept separate from the link base so the flash-address consumers (the slot
+   * dispatcher, inactive/active_slot_base, the relocate targets) are unchanged. */
+  __vm_a_start = TOIT_VM_A_ORIGIN;
+  __vm_a_end   = TOIT_VM_A_ORIGIN + (__vm_link_end - __vm_link_base);
 
 #ifndef TOIT_VM_SLOT_B
   ASSERT(__vm_a_end - __vm_a_start <= TOIT_VM_SLOT_SIZE,
