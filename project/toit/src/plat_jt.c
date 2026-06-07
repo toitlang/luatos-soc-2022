@@ -17,22 +17,221 @@
 // did under -Wl,--wrap.
 #pragma GCC diagnostic ignored "-Wbuiltin-declaration-mismatch"
 
+extern void *ADC_channelDeInit;
+extern void *ADC_channelInit;
+extern void *ADC_getDefaultConfig;
+extern void *ADC_startConversion;
+extern void *ARM_I2C_GetVersion;
+extern void *ARM_USART_GetVersion;
+extern void *BSP_CommonInit;
+extern void *BSP_CustomInit;
+extern void *BSP_DeInit_SmallImg;
+extern void *BSP_FlashNVICSwReset;
+extern void *BSP_FlashSetGvarforSlp2;
+extern void *BSP_GetFSAssertCount;
+extern void *BSP_GetPlatConfigItemValue;
+extern void *BSP_GetRawFlashPlatConfig;
+extern void *BSP_Init_SmallImg;
+extern void *BSP_LoadPlatConfigFromFs;
+extern void *BSP_LoadPlatConfigFromRawFlash;
+extern void *BSP_QSPI_Erase_Cmd;
+extern void *BSP_QSPI_Erase_Proc;
 extern void *BSP_QSPI_Erase_Safe;
+extern void *BSP_QSPI_Erase_Sector;
+extern void *BSP_QSPI_Init;
+extern void *BSP_QSPI_Read_Safe;
+extern void *BSP_QSPI_Read_Status_Reg;
+extern void *BSP_QSPI_SWReset;
+extern void *BSP_QSPI_Write;
+extern void *BSP_QSPI_Write_Gran_Cmd;
+extern void *BSP_QSPI_Write_Proc;
 extern void *BSP_QSPI_Write_Safe;
+extern void *BSP_QSPI_Write_Volatile_Status_Reg;
+extern void *BSP_QSPI_XIP_Mode_Disable;
+extern void *BSP_QSPI_XIP_Mode_Enable;
+extern void *BSP_SavePlatConfigToFs;
+extern void *BSP_SavePlatConfigToRawFlash;
+extern void *BSP_SetFSAssertCount;
+extern void *BSP_SetFsPorDefaultValue;
 extern void *BSP_SetPlatConfigItemValue;
+extern void *BSP_UsbDeInit;
+extern void *BSP_UsbInit;
+extern void *CLOCK_AssertChkBeforeSlp;
+extern void *CLOCK_Trace;
+extern void *CLOCK_checkClkID;
+extern void *CLOCK_clockDisable;
+extern void *CLOCK_clockEnable;
+extern void *CLOCK_clockReset;
+extern void *CLOCK_getClockFreq;
+extern void *CLOCK_setClockDiv;
+extern void *CLOCK_setClockSrc;
+extern void *DMA_ForceStartStream;
+extern void *DMA_buildDescriptor;
+extern void *DMA_closeChannel;
+extern void *DMA_disableChannelInterrupts;
+extern void *DMA_enableChannelInterrupts;
+extern void *DMA_getChannelCount;
+extern void *DMA_getChannelCurrentTargetAddress;
+extern void *DMA_init;
+extern void *DMA_loadChannelDescriptorAndRun;
+extern void *DMA_loadChannelFirstDescriptor;
+extern void *DMA_openChannel;
+extern void *DMA_resetChannel;
+extern void *DMA_resumeChannel;
+extern void *DMA_rigisterChannelCallback;
+extern void *DMA_setChannelRequestSource;
+extern void *DMA_setDescriptorTransferLen;
+extern void *DMA_startChannel;
+extern void *DMA_stopChannel;
+extern void *DMA_stopChannelNoWait;
+extern void *DMA_suspendChannel;
+extern void *DMA_transferSetup;
+extern void *Driver_I2C0;
+extern void *Driver_I2C1;
+extern void *Driver_USART1;
 extern void *GPIO_Config;
+extern void *GPIO_ExtiConfig;
+extern void *GPIO_ExtiSetCB;
+extern void *GPIO_FastOutput;
+extern void *GPIO_Input;
+extern void *GPIO_InputMulti;
 extern void *GPIO_IomuxEC618;
+extern void *GPIO_OutPulse;
 extern void *GPIO_Output;
+extern void *GPIO_OutputMulti;
 extern void *GPIO_PullConfig;
+extern void *GPIO_ToPadEC618;
+extern void *GPIO_Toggle;
+extern void *GPIO_ToggleMulti;
 extern void *GPIO_clearInterruptFlags;
+extern void *GPIO_driverInit;
+extern void *GPIO_enterLowPowerStatePrepare;
+extern void *GPIO_exitLowPowerStateRestore;
 extern void *GPIO_getInterruptFlags;
 extern void *GPIO_interruptConfig;
 extern void *GPIO_pinConfig;
 extern void *GPIO_pinRead;
 extern void *GPIO_pinWrite;
+extern void *GPR_Is51MClockInUse;
+extern void *GPR_USBCHRST_ResetReq_SetVal;
+extern void *GPR_USBCPhy_ResetReq_SetVal;
+extern void *GPR_USBPAPB_ResetReq_SetVal;
+extern void *GPR_USBPPor_ResetReq_SetVal;
+extern void *GPR_USBPUtmi_ResetReq_SetVal;
+extern void *GPR_USB_DM_Ctrl_Disable_Rst;
+extern void *GPR_USB_DM_Ctrl_Enable_Without_Usbcprst;
+extern void *GPR_apAccessEnter;
+extern void *GPR_apAccessExit;
+extern void *GPR_apDFCVote4CP;
+extern void *GPR_apDFCVoteIdle;
+extern void *GPR_apSysClkForceOnControl;
+extern void *GPR_bootSetting;
+extern void *GPR_clockDisable;
+extern void *GPR_clockEnable;
+extern void *GPR_clockEnableCheck;
+extern void *GPR_cpGetRstSrc;
+extern void *GPR_cpResetCfgSet;
+extern void *GPR_csmbAccessEnter;
+extern void *GPR_csmbAccessExit;
+extern void *GPR_flashClockDisable;
+extern void *GPR_flashClockEnable;
+extern void *GPR_flashSWReset;
+extern void *GPR_getClockFreq;
+extern void *GPR_getSystickClk;
+extern void *GPR_initialize;
+extern void *GPR_lockUpActionCtrl;
+extern void *GPR_rmiHrstRel;
+extern void *GPR_setApbGprAcg;
+extern void *GPR_setClockDiv;
+extern void *GPR_setClockSrc;
+extern void *GPR_setFlashClockDiv;
+extern void *GPR_setFlashClockSrc;
+extern void *GPR_swReset;
+extern void *GPR_swResetModule;
+extern void *GPR_switchSystickClk;
+extern void *GPR_unilogSWReset;
+extern void *GPR_usbUlgClr;
+extern void *GPR_usbUlgSet;
+extern void *HAL_ADC_CalibrateRawCode;
+extern void *HAL_ADC_ConvertThermalRawCodeToTemperatureHighAccuracy;
+extern void *HAL_QSPI_Command;
+extern void *HAL_QSPI_Config;
+extern void *HAL_QSPI_Init;
+extern void *HAL_QSPI_Receive;
+extern void *HAL_QSPI_Set_CPflh_Clk;
+extern void *HAL_QSPI_Set_Clk;
+extern void *HAL_QSPI_Transmit;
+extern void *HAL_QSPI_XIP_Enable;
+extern void *HAL_UartDumpPortCheck;
+extern void *HAL_UartDumpPortInit;
+extern void *HAL_UartDumpPortSend;
+extern void *I2C_Control;
+extern void *I2C_GetCapabilities;
+extern void *I2C_GetClockFreq;
+extern void *I2C_GetDataCount;
+extern void *I2C_GetStatus;
+extern void *I2C_Initialize;
+extern void *I2C_MasterReceive;
+extern void *I2C_MasterTransmit;
+extern void *I2C_PowerControl;
+extern void *I2C_SlaveReceive;
+extern void *I2C_Uninitialize;
 extern void *OsaSystemTimeReadRamUtc;
 extern void *OsaTimerSync;
+extern void *PAD_driverInit;
+extern void *PAD_enterLowPowerStatePrepare;
+extern void *PAD_exitLowPowerStateRestore;
+extern void *PAD_getDefaultConfig;
+extern void *PAD_setPinConfig;
+extern void *PAD_setPinPullConfig;
+extern void *Pad0_WakeupIntHandler;
+extern void *Pad1_WakeupIntHandler;
+extern void *Pad2_WakeupIntHandler;
+extern void *Pad3_WakeupIntHandler;
+extern void *Pad4_WakeupIntHandler;
+extern void *Pad5_WakeupIntHandler;
+extern void *QSPI_CheckQEnFlag;
+extern void *QSPI_PollingBusyFlagIntableOnce;
+extern void *RTC_WakeupIntHandler;
 extern void *ResetStateGet;
+extern void *TIMER_clearInterruptFlags;
+extern void *TIMER_deInit;
+extern void *TIMER_driverInit;
+extern void *TIMER_getDefaultConfig;
+extern void *TIMER_getInterruptFlags;
+extern void *TIMER_init;
+extern void *TIMER_interruptConfig;
+extern void *TIMER_start;
+extern void *TIMER_stop;
+extern void *UART_flush;
+extern void *UART_init;
+extern void *UART_receive;
+extern void *UART_send;
+extern void *UART_setBaudrate;
+extern void *USART0_IRQHandler;
+extern void *USART1_DmaRxEvent;
+extern void *USART1_DmaTxEvent;
+extern void *USART1_IRQHandler;
+extern void *USART2_DmaRxEvent;
+extern void *USART2_IRQHandler;
+extern void *USART_Control;
+extern void *USART_DmaRxEvent;
+extern void *USART_DmaTxEvent;
+extern void *USART_GetBaudRate;
+extern void *USART_GetCapabilities;
+extern void *USART_GetModemStatus;
+extern void *USART_GetRxCount;
+extern void *USART_GetStatus;
+extern void *USART_GetTxCount;
+extern void *USART_IRQHandler;
+extern void *USART_Initialize;
+extern void *USART_PowerControl;
+extern void *USART_Receive;
+extern void *USART_Send;
+extern void *USART_SendPolling;
+extern void *USART_SetBaudrate;
+extern void *USART_SetModemControl;
+extern void *USART_Uninitialize;
 extern void *Uart_BaseInitEx;
 extern void *Uart_ChangeBR;
 extern void *Uart_DeInit;
@@ -40,6 +239,13 @@ extern void *Uart_IsTSREmpty;
 extern void *Uart_RxBufferClear;
 extern void *Uart_RxBufferRead;
 extern void *Uart_TxTaskSafe;
+extern void *WDT_deInit;
+extern void *WDT_getStartStatus;
+extern void *WDT_init;
+extern void *WDT_kick;
+extern void *WDT_start;
+extern void *WDT_stop;
+extern void *WDT_unlock;
 extern void *XIC_EnableIRQ;
 extern void *XIC_SetVector;
 extern void *_ZNSt13random_device7_M_finiEv;
@@ -51,9 +257,14 @@ extern void *_ZSt25__throw_bad_function_callv;
 extern void *_ZdaPv;
 extern void *_ZdlPv;
 extern void *__aeabi_atexit;
+extern void *__aeabi_cdcmpeq;
+extern void *__aeabi_cdcmple;
+extern void *__aeabi_cdrcmple;
 extern void *__aeabi_d2f;
 extern void *__aeabi_d2iz;
 extern void *__aeabi_d2lz;
+extern void *__aeabi_d2uiz;
+extern void *__aeabi_d2ulz;
 extern void *__aeabi_dadd;
 extern void *__aeabi_dcmpeq;
 extern void *__aeabi_dcmpge;
@@ -63,11 +274,14 @@ extern void *__aeabi_dcmplt;
 extern void *__aeabi_dcmpun;
 extern void *__aeabi_ddiv;
 extern void *__aeabi_dmul;
+extern void *__aeabi_drsub;
 extern void *__aeabi_dsub;
 extern void *__aeabi_f2d;
 extern void *__aeabi_i2d;
 extern void *__aeabi_l2d;
 extern void *__aeabi_ldivmod;
+extern void *__aeabi_ui2d;
+extern void *__aeabi_ul2d;
 extern void *__aeabi_uldivmod;
 extern void *__assert_func;
 extern void *__cxa_thread_atexit;
@@ -90,6 +304,7 @@ extern void *cos;
 extern void *cosh;
 extern void *deregisterPSEventCallback;
 extern void *exp;
+extern void *fabs;
 extern void *fclose;
 extern void *feof;
 extern void *fflush;
@@ -107,6 +322,11 @@ extern void *gmtime_r;
 extern void *isspace;
 extern void *localtime_r;
 extern void *log;
+extern void *luat_mobile_config;
+extern void *luat_rtos_task_create;
+extern void *luat_rtos_task_sleep;
+extern void *luat_uart_exist;
+extern void *luat_uart_write;
 extern void *malloc;
 extern void *memchr;
 extern void *memcmp;
@@ -126,6 +346,8 @@ extern void *psSetCdgcont;
 extern void *putchar;
 extern void *putenv;
 extern void *puts;
+extern void *pwrKeyIntHandler;
+extern void *rand;
 extern void *realloc;
 extern void *registerPSEventCallback;
 extern void *rngGenRandom;
@@ -134,27 +356,79 @@ extern void *sin;
 extern void *sinh;
 extern void *slot_marker_read;
 extern void *slot_marker_write;
+extern void *slpManAonWdtFeed;
+extern void *slpManAonWdtStop;
 extern void *slpManApplyPlatVoteHandle;
+extern void *slpManDeepSlpTimerDel;
 extern void *slpManDeepSlpTimerRegisterExpCb;
 extern void *slpManDeepSlpTimerStart;
+extern void *slpManDrvVoteSleep;
+extern void *slpManExcutePredefinedBackupCb;
+extern void *slpManExcutePredefinedBackupCbInPaging;
+extern void *slpManExcutePredefinedRestoreCb;
+extern void *slpManExcutePredefinedRestoreCbInPaging;
+extern void *slpManExcuteUsrdefinedBackupCb;
+extern void *slpManExcuteUsrdefinedRestoreCb;
+extern void *slpManExtIntPreProcess;
+extern void *slpManGetDrvBitmap;
+extern void *slpManGetDrvVoteMask;
+extern void *slpManGetLastSlpState;
+extern void *slpManGetWakeupPadCfg;
+extern void *slpManGetWakeupPinValue;
+extern void *slpManGivebackPlatVoteHandle;
+extern void *slpManPlatGetSlpState;
 extern void *slpManPlatVoteDisableSleep;
 extern void *slpManPlatVoteEnableSleep;
+extern void *slpManProductionTest;
+extern void *slpManRegisterPredefinedBackupCb;
+extern void *slpManRegisterPredefinedRestoreCb;
+extern void *slpManSetDrvVoteMask;
 extern void *slpManSetPmuSleepMode;
+extern void *slpManSetWakeupPadCfg;
+extern void *slpManStartPowerOff;
+extern void *slpManUnregisterPredefinedBackupCb;
+extern void *slpManUnregisterPredefinedRestoreCb;
+extern void *slpManUpdatePmuTimingCfg;
 extern void *snprintf;
+extern void *soc_call_function_in_service;
+extern void *soc_cms_proc;
+extern void *soc_disable_tcpip_use_default_pdp;
+extern void *soc_free_later;
+extern void *soc_get_poweron_time_ms;
+extern void *soc_get_poweron_time_tick;
+extern void *soc_info;
+extern void *soc_mobile_default_pdn_ip_type;
+extern void *soc_mobile_search_cell_info_async;
+extern void *soc_mobile_set_rrc_release_time;
+extern void *soc_netif_input_prepare;
 extern void *soc_power_mode;
+extern void *soc_printf;
+extern void *soc_set_usb_sleep;
+extern void *soc_uart0_set_log_off;
+extern void *soc_unilog_callback;
+extern void *soc_usb_onoff;
+extern void *soc_usb_serial_output;
+extern void *soc_vsprintf;
 extern void *sprintf;
 extern void *sqrt;
+extern void *srand;
+extern void *sscanf;
+extern void *strcat;
 extern void *strchr;
 extern void *strcmp;
 extern void *strcpy;
+extern void *strcspn;
 extern void *strdup;
 extern void *strerror;
 extern void *strlen;
+extern void *strncat;
 extern void *strncmp;
 extern void *strncpy;
 extern void *strnlen;
+extern void *strspn;
 extern void *strstr;
 extern void *strtod;
+extern void *strtoul;
 extern void *tan;
 extern void *tanh;
 extern void *tcp_accept;
@@ -188,6 +462,7 @@ extern void *vPortSetHeapTag;
 extern void *vQueueDelete;
 extern void *vTaskDelete;
 extern void *vfprintf;
+extern void *vsnprintf;
 extern void *xQueueCreateMutex;
 extern void *xQueueGenericCreate;
 extern void *xQueueGenericReceive;
@@ -204,22 +479,221 @@ extern void *xTaskNotifyWait;
 // regardless of which slot's image they were linked from.
 __attribute__((section(".jt_data"), used))
 void *const g_plat_jt[PLAT_JT_COUNT] = {
+    [PLAT_JT_ADC_channelDeInit] = &ADC_channelDeInit,
+    [PLAT_JT_ADC_channelInit] = &ADC_channelInit,
+    [PLAT_JT_ADC_getDefaultConfig] = &ADC_getDefaultConfig,
+    [PLAT_JT_ADC_startConversion] = &ADC_startConversion,
+    [PLAT_JT_ARM_I2C_GetVersion] = &ARM_I2C_GetVersion,
+    [PLAT_JT_ARM_USART_GetVersion] = &ARM_USART_GetVersion,
+    [PLAT_JT_BSP_CommonInit] = &BSP_CommonInit,
+    [PLAT_JT_BSP_CustomInit] = &BSP_CustomInit,
+    [PLAT_JT_BSP_DeInit_SmallImg] = &BSP_DeInit_SmallImg,
+    [PLAT_JT_BSP_FlashNVICSwReset] = &BSP_FlashNVICSwReset,
+    [PLAT_JT_BSP_FlashSetGvarforSlp2] = &BSP_FlashSetGvarforSlp2,
+    [PLAT_JT_BSP_GetFSAssertCount] = &BSP_GetFSAssertCount,
+    [PLAT_JT_BSP_GetPlatConfigItemValue] = &BSP_GetPlatConfigItemValue,
+    [PLAT_JT_BSP_GetRawFlashPlatConfig] = &BSP_GetRawFlashPlatConfig,
+    [PLAT_JT_BSP_Init_SmallImg] = &BSP_Init_SmallImg,
+    [PLAT_JT_BSP_LoadPlatConfigFromFs] = &BSP_LoadPlatConfigFromFs,
+    [PLAT_JT_BSP_LoadPlatConfigFromRawFlash] = &BSP_LoadPlatConfigFromRawFlash,
+    [PLAT_JT_BSP_QSPI_Erase_Cmd] = &BSP_QSPI_Erase_Cmd,
+    [PLAT_JT_BSP_QSPI_Erase_Proc] = &BSP_QSPI_Erase_Proc,
     [PLAT_JT_BSP_QSPI_Erase_Safe] = &BSP_QSPI_Erase_Safe,
+    [PLAT_JT_BSP_QSPI_Erase_Sector] = &BSP_QSPI_Erase_Sector,
+    [PLAT_JT_BSP_QSPI_Init] = &BSP_QSPI_Init,
+    [PLAT_JT_BSP_QSPI_Read_Safe] = &BSP_QSPI_Read_Safe,
+    [PLAT_JT_BSP_QSPI_Read_Status_Reg] = &BSP_QSPI_Read_Status_Reg,
+    [PLAT_JT_BSP_QSPI_SWReset] = &BSP_QSPI_SWReset,
+    [PLAT_JT_BSP_QSPI_Write] = &BSP_QSPI_Write,
+    [PLAT_JT_BSP_QSPI_Write_Gran_Cmd] = &BSP_QSPI_Write_Gran_Cmd,
+    [PLAT_JT_BSP_QSPI_Write_Proc] = &BSP_QSPI_Write_Proc,
     [PLAT_JT_BSP_QSPI_Write_Safe] = &BSP_QSPI_Write_Safe,
+    [PLAT_JT_BSP_QSPI_Write_Volatile_Status_Reg] = &BSP_QSPI_Write_Volatile_Status_Reg,
+    [PLAT_JT_BSP_QSPI_XIP_Mode_Disable] = &BSP_QSPI_XIP_Mode_Disable,
+    [PLAT_JT_BSP_QSPI_XIP_Mode_Enable] = &BSP_QSPI_XIP_Mode_Enable,
+    [PLAT_JT_BSP_SavePlatConfigToFs] = &BSP_SavePlatConfigToFs,
+    [PLAT_JT_BSP_SavePlatConfigToRawFlash] = &BSP_SavePlatConfigToRawFlash,
+    [PLAT_JT_BSP_SetFSAssertCount] = &BSP_SetFSAssertCount,
+    [PLAT_JT_BSP_SetFsPorDefaultValue] = &BSP_SetFsPorDefaultValue,
     [PLAT_JT_BSP_SetPlatConfigItemValue] = &BSP_SetPlatConfigItemValue,
+    [PLAT_JT_BSP_UsbDeInit] = &BSP_UsbDeInit,
+    [PLAT_JT_BSP_UsbInit] = &BSP_UsbInit,
+    [PLAT_JT_CLOCK_AssertChkBeforeSlp] = &CLOCK_AssertChkBeforeSlp,
+    [PLAT_JT_CLOCK_Trace] = &CLOCK_Trace,
+    [PLAT_JT_CLOCK_checkClkID] = &CLOCK_checkClkID,
+    [PLAT_JT_CLOCK_clockDisable] = &CLOCK_clockDisable,
+    [PLAT_JT_CLOCK_clockEnable] = &CLOCK_clockEnable,
+    [PLAT_JT_CLOCK_clockReset] = &CLOCK_clockReset,
+    [PLAT_JT_CLOCK_getClockFreq] = &CLOCK_getClockFreq,
+    [PLAT_JT_CLOCK_setClockDiv] = &CLOCK_setClockDiv,
+    [PLAT_JT_CLOCK_setClockSrc] = &CLOCK_setClockSrc,
+    [PLAT_JT_DMA_ForceStartStream] = &DMA_ForceStartStream,
+    [PLAT_JT_DMA_buildDescriptor] = &DMA_buildDescriptor,
+    [PLAT_JT_DMA_closeChannel] = &DMA_closeChannel,
+    [PLAT_JT_DMA_disableChannelInterrupts] = &DMA_disableChannelInterrupts,
+    [PLAT_JT_DMA_enableChannelInterrupts] = &DMA_enableChannelInterrupts,
+    [PLAT_JT_DMA_getChannelCount] = &DMA_getChannelCount,
+    [PLAT_JT_DMA_getChannelCurrentTargetAddress] = &DMA_getChannelCurrentTargetAddress,
+    [PLAT_JT_DMA_init] = &DMA_init,
+    [PLAT_JT_DMA_loadChannelDescriptorAndRun] = &DMA_loadChannelDescriptorAndRun,
+    [PLAT_JT_DMA_loadChannelFirstDescriptor] = &DMA_loadChannelFirstDescriptor,
+    [PLAT_JT_DMA_openChannel] = &DMA_openChannel,
+    [PLAT_JT_DMA_resetChannel] = &DMA_resetChannel,
+    [PLAT_JT_DMA_resumeChannel] = &DMA_resumeChannel,
+    [PLAT_JT_DMA_rigisterChannelCallback] = &DMA_rigisterChannelCallback,
+    [PLAT_JT_DMA_setChannelRequestSource] = &DMA_setChannelRequestSource,
+    [PLAT_JT_DMA_setDescriptorTransferLen] = &DMA_setDescriptorTransferLen,
+    [PLAT_JT_DMA_startChannel] = &DMA_startChannel,
+    [PLAT_JT_DMA_stopChannel] = &DMA_stopChannel,
+    [PLAT_JT_DMA_stopChannelNoWait] = &DMA_stopChannelNoWait,
+    [PLAT_JT_DMA_suspendChannel] = &DMA_suspendChannel,
+    [PLAT_JT_DMA_transferSetup] = &DMA_transferSetup,
+    [PLAT_JT_Driver_I2C0] = &Driver_I2C0,
+    [PLAT_JT_Driver_I2C1] = &Driver_I2C1,
+    [PLAT_JT_Driver_USART1] = &Driver_USART1,
     [PLAT_JT_GPIO_Config] = &GPIO_Config,
+    [PLAT_JT_GPIO_ExtiConfig] = &GPIO_ExtiConfig,
+    [PLAT_JT_GPIO_ExtiSetCB] = &GPIO_ExtiSetCB,
+    [PLAT_JT_GPIO_FastOutput] = &GPIO_FastOutput,
+    [PLAT_JT_GPIO_Input] = &GPIO_Input,
+    [PLAT_JT_GPIO_InputMulti] = &GPIO_InputMulti,
     [PLAT_JT_GPIO_IomuxEC618] = &GPIO_IomuxEC618,
+    [PLAT_JT_GPIO_OutPulse] = &GPIO_OutPulse,
     [PLAT_JT_GPIO_Output] = &GPIO_Output,
+    [PLAT_JT_GPIO_OutputMulti] = &GPIO_OutputMulti,
     [PLAT_JT_GPIO_PullConfig] = &GPIO_PullConfig,
+    [PLAT_JT_GPIO_ToPadEC618] = &GPIO_ToPadEC618,
+    [PLAT_JT_GPIO_Toggle] = &GPIO_Toggle,
+    [PLAT_JT_GPIO_ToggleMulti] = &GPIO_ToggleMulti,
     [PLAT_JT_GPIO_clearInterruptFlags] = &GPIO_clearInterruptFlags,
+    [PLAT_JT_GPIO_driverInit] = &GPIO_driverInit,
+    [PLAT_JT_GPIO_enterLowPowerStatePrepare] = &GPIO_enterLowPowerStatePrepare,
+    [PLAT_JT_GPIO_exitLowPowerStateRestore] = &GPIO_exitLowPowerStateRestore,
     [PLAT_JT_GPIO_getInterruptFlags] = &GPIO_getInterruptFlags,
     [PLAT_JT_GPIO_interruptConfig] = &GPIO_interruptConfig,
     [PLAT_JT_GPIO_pinConfig] = &GPIO_pinConfig,
     [PLAT_JT_GPIO_pinRead] = &GPIO_pinRead,
     [PLAT_JT_GPIO_pinWrite] = &GPIO_pinWrite,
+    [PLAT_JT_GPR_Is51MClockInUse] = &GPR_Is51MClockInUse,
+    [PLAT_JT_GPR_USBCHRST_ResetReq_SetVal] = &GPR_USBCHRST_ResetReq_SetVal,
+    [PLAT_JT_GPR_USBCPhy_ResetReq_SetVal] = &GPR_USBCPhy_ResetReq_SetVal,
+    [PLAT_JT_GPR_USBPAPB_ResetReq_SetVal] = &GPR_USBPAPB_ResetReq_SetVal,
+    [PLAT_JT_GPR_USBPPor_ResetReq_SetVal] = &GPR_USBPPor_ResetReq_SetVal,
+    [PLAT_JT_GPR_USBPUtmi_ResetReq_SetVal] = &GPR_USBPUtmi_ResetReq_SetVal,
+    [PLAT_JT_GPR_USB_DM_Ctrl_Disable_Rst] = &GPR_USB_DM_Ctrl_Disable_Rst,
+    [PLAT_JT_GPR_USB_DM_Ctrl_Enable_Without_Usbcprst] = &GPR_USB_DM_Ctrl_Enable_Without_Usbcprst,
+    [PLAT_JT_GPR_apAccessEnter] = &GPR_apAccessEnter,
+    [PLAT_JT_GPR_apAccessExit] = &GPR_apAccessExit,
+    [PLAT_JT_GPR_apDFCVote4CP] = &GPR_apDFCVote4CP,
+    [PLAT_JT_GPR_apDFCVoteIdle] = &GPR_apDFCVoteIdle,
+    [PLAT_JT_GPR_apSysClkForceOnControl] = &GPR_apSysClkForceOnControl,
+    [PLAT_JT_GPR_bootSetting] = &GPR_bootSetting,
+    [PLAT_JT_GPR_clockDisable] = &GPR_clockDisable,
+    [PLAT_JT_GPR_clockEnable] = &GPR_clockEnable,
+    [PLAT_JT_GPR_clockEnableCheck] = &GPR_clockEnableCheck,
+    [PLAT_JT_GPR_cpGetRstSrc] = &GPR_cpGetRstSrc,
+    [PLAT_JT_GPR_cpResetCfgSet] = &GPR_cpResetCfgSet,
+    [PLAT_JT_GPR_csmbAccessEnter] = &GPR_csmbAccessEnter,
+    [PLAT_JT_GPR_csmbAccessExit] = &GPR_csmbAccessExit,
+    [PLAT_JT_GPR_flashClockDisable] = &GPR_flashClockDisable,
+    [PLAT_JT_GPR_flashClockEnable] = &GPR_flashClockEnable,
+    [PLAT_JT_GPR_flashSWReset] = &GPR_flashSWReset,
+    [PLAT_JT_GPR_getClockFreq] = &GPR_getClockFreq,
+    [PLAT_JT_GPR_getSystickClk] = &GPR_getSystickClk,
+    [PLAT_JT_GPR_initialize] = &GPR_initialize,
+    [PLAT_JT_GPR_lockUpActionCtrl] = &GPR_lockUpActionCtrl,
+    [PLAT_JT_GPR_rmiHrstRel] = &GPR_rmiHrstRel,
+    [PLAT_JT_GPR_setApbGprAcg] = &GPR_setApbGprAcg,
+    [PLAT_JT_GPR_setClockDiv] = &GPR_setClockDiv,
+    [PLAT_JT_GPR_setClockSrc] = &GPR_setClockSrc,
+    [PLAT_JT_GPR_setFlashClockDiv] = &GPR_setFlashClockDiv,
+    [PLAT_JT_GPR_setFlashClockSrc] = &GPR_setFlashClockSrc,
+    [PLAT_JT_GPR_swReset] = &GPR_swReset,
+    [PLAT_JT_GPR_swResetModule] = &GPR_swResetModule,
+    [PLAT_JT_GPR_switchSystickClk] = &GPR_switchSystickClk,
+    [PLAT_JT_GPR_unilogSWReset] = &GPR_unilogSWReset,
+    [PLAT_JT_GPR_usbUlgClr] = &GPR_usbUlgClr,
+    [PLAT_JT_GPR_usbUlgSet] = &GPR_usbUlgSet,
+    [PLAT_JT_HAL_ADC_CalibrateRawCode] = &HAL_ADC_CalibrateRawCode,
+    [PLAT_JT_HAL_ADC_ConvertThermalRawCodeToTemperatureHighAccuracy] = &HAL_ADC_ConvertThermalRawCodeToTemperatureHighAccuracy,
+    [PLAT_JT_HAL_QSPI_Command] = &HAL_QSPI_Command,
+    [PLAT_JT_HAL_QSPI_Config] = &HAL_QSPI_Config,
+    [PLAT_JT_HAL_QSPI_Init] = &HAL_QSPI_Init,
+    [PLAT_JT_HAL_QSPI_Receive] = &HAL_QSPI_Receive,
+    [PLAT_JT_HAL_QSPI_Set_CPflh_Clk] = &HAL_QSPI_Set_CPflh_Clk,
+    [PLAT_JT_HAL_QSPI_Set_Clk] = &HAL_QSPI_Set_Clk,
+    [PLAT_JT_HAL_QSPI_Transmit] = &HAL_QSPI_Transmit,
+    [PLAT_JT_HAL_QSPI_XIP_Enable] = &HAL_QSPI_XIP_Enable,
+    [PLAT_JT_HAL_UartDumpPortCheck] = &HAL_UartDumpPortCheck,
+    [PLAT_JT_HAL_UartDumpPortInit] = &HAL_UartDumpPortInit,
+    [PLAT_JT_HAL_UartDumpPortSend] = &HAL_UartDumpPortSend,
+    [PLAT_JT_I2C_Control] = &I2C_Control,
+    [PLAT_JT_I2C_GetCapabilities] = &I2C_GetCapabilities,
+    [PLAT_JT_I2C_GetClockFreq] = &I2C_GetClockFreq,
+    [PLAT_JT_I2C_GetDataCount] = &I2C_GetDataCount,
+    [PLAT_JT_I2C_GetStatus] = &I2C_GetStatus,
+    [PLAT_JT_I2C_Initialize] = &I2C_Initialize,
+    [PLAT_JT_I2C_MasterReceive] = &I2C_MasterReceive,
+    [PLAT_JT_I2C_MasterTransmit] = &I2C_MasterTransmit,
+    [PLAT_JT_I2C_PowerControl] = &I2C_PowerControl,
+    [PLAT_JT_I2C_SlaveReceive] = &I2C_SlaveReceive,
+    [PLAT_JT_I2C_Uninitialize] = &I2C_Uninitialize,
     [PLAT_JT_OsaSystemTimeReadRamUtc] = &OsaSystemTimeReadRamUtc,
     [PLAT_JT_OsaTimerSync] = &OsaTimerSync,
+    [PLAT_JT_PAD_driverInit] = &PAD_driverInit,
+    [PLAT_JT_PAD_enterLowPowerStatePrepare] = &PAD_enterLowPowerStatePrepare,
+    [PLAT_JT_PAD_exitLowPowerStateRestore] = &PAD_exitLowPowerStateRestore,
+    [PLAT_JT_PAD_getDefaultConfig] = &PAD_getDefaultConfig,
+    [PLAT_JT_PAD_setPinConfig] = &PAD_setPinConfig,
+    [PLAT_JT_PAD_setPinPullConfig] = &PAD_setPinPullConfig,
+    [PLAT_JT_Pad0_WakeupIntHandler] = &Pad0_WakeupIntHandler,
+    [PLAT_JT_Pad1_WakeupIntHandler] = &Pad1_WakeupIntHandler,
+    [PLAT_JT_Pad2_WakeupIntHandler] = &Pad2_WakeupIntHandler,
+    [PLAT_JT_Pad3_WakeupIntHandler] = &Pad3_WakeupIntHandler,
+    [PLAT_JT_Pad4_WakeupIntHandler] = &Pad4_WakeupIntHandler,
+    [PLAT_JT_Pad5_WakeupIntHandler] = &Pad5_WakeupIntHandler,
+    [PLAT_JT_QSPI_CheckQEnFlag] = &QSPI_CheckQEnFlag,
+    [PLAT_JT_QSPI_PollingBusyFlagIntableOnce] = &QSPI_PollingBusyFlagIntableOnce,
+    [PLAT_JT_RTC_WakeupIntHandler] = &RTC_WakeupIntHandler,
     [PLAT_JT_ResetStateGet] = &ResetStateGet,
+    [PLAT_JT_TIMER_clearInterruptFlags] = &TIMER_clearInterruptFlags,
+    [PLAT_JT_TIMER_deInit] = &TIMER_deInit,
+    [PLAT_JT_TIMER_driverInit] = &TIMER_driverInit,
+    [PLAT_JT_TIMER_getDefaultConfig] = &TIMER_getDefaultConfig,
+    [PLAT_JT_TIMER_getInterruptFlags] = &TIMER_getInterruptFlags,
+    [PLAT_JT_TIMER_init] = &TIMER_init,
+    [PLAT_JT_TIMER_interruptConfig] = &TIMER_interruptConfig,
+    [PLAT_JT_TIMER_start] = &TIMER_start,
+    [PLAT_JT_TIMER_stop] = &TIMER_stop,
+    [PLAT_JT_UART_flush] = &UART_flush,
+    [PLAT_JT_UART_init] = &UART_init,
+    [PLAT_JT_UART_receive] = &UART_receive,
+    [PLAT_JT_UART_send] = &UART_send,
+    [PLAT_JT_UART_setBaudrate] = &UART_setBaudrate,
+    [PLAT_JT_USART0_IRQHandler] = &USART0_IRQHandler,
+    [PLAT_JT_USART1_DmaRxEvent] = &USART1_DmaRxEvent,
+    [PLAT_JT_USART1_DmaTxEvent] = &USART1_DmaTxEvent,
+    [PLAT_JT_USART1_IRQHandler] = &USART1_IRQHandler,
+    [PLAT_JT_USART2_DmaRxEvent] = &USART2_DmaRxEvent,
+    [PLAT_JT_USART2_IRQHandler] = &USART2_IRQHandler,
+    [PLAT_JT_USART_Control] = &USART_Control,
+    [PLAT_JT_USART_DmaRxEvent] = &USART_DmaRxEvent,
+    [PLAT_JT_USART_DmaTxEvent] = &USART_DmaTxEvent,
+    [PLAT_JT_USART_GetBaudRate] = &USART_GetBaudRate,
+    [PLAT_JT_USART_GetCapabilities] = &USART_GetCapabilities,
+    [PLAT_JT_USART_GetModemStatus] = &USART_GetModemStatus,
+    [PLAT_JT_USART_GetRxCount] = &USART_GetRxCount,
+    [PLAT_JT_USART_GetStatus] = &USART_GetStatus,
+    [PLAT_JT_USART_GetTxCount] = &USART_GetTxCount,
+    [PLAT_JT_USART_IRQHandler] = &USART_IRQHandler,
+    [PLAT_JT_USART_Initialize] = &USART_Initialize,
+    [PLAT_JT_USART_PowerControl] = &USART_PowerControl,
+    [PLAT_JT_USART_Receive] = &USART_Receive,
+    [PLAT_JT_USART_Send] = &USART_Send,
+    [PLAT_JT_USART_SendPolling] = &USART_SendPolling,
+    [PLAT_JT_USART_SetBaudrate] = &USART_SetBaudrate,
+    [PLAT_JT_USART_SetModemControl] = &USART_SetModemControl,
+    [PLAT_JT_USART_Uninitialize] = &USART_Uninitialize,
     [PLAT_JT_Uart_BaseInitEx] = &Uart_BaseInitEx,
     [PLAT_JT_Uart_ChangeBR] = &Uart_ChangeBR,
     [PLAT_JT_Uart_DeInit] = &Uart_DeInit,
@@ -227,6 +701,13 @@ void *const g_plat_jt[PLAT_JT_COUNT] = {
     [PLAT_JT_Uart_RxBufferClear] = &Uart_RxBufferClear,
     [PLAT_JT_Uart_RxBufferRead] = &Uart_RxBufferRead,
     [PLAT_JT_Uart_TxTaskSafe] = &Uart_TxTaskSafe,
+    [PLAT_JT_WDT_deInit] = &WDT_deInit,
+    [PLAT_JT_WDT_getStartStatus] = &WDT_getStartStatus,
+    [PLAT_JT_WDT_init] = &WDT_init,
+    [PLAT_JT_WDT_kick] = &WDT_kick,
+    [PLAT_JT_WDT_start] = &WDT_start,
+    [PLAT_JT_WDT_stop] = &WDT_stop,
+    [PLAT_JT_WDT_unlock] = &WDT_unlock,
     [PLAT_JT_XIC_EnableIRQ] = &XIC_EnableIRQ,
     [PLAT_JT_XIC_SetVector] = &XIC_SetVector,
     [PLAT_JT__ZNSt13random_device7_M_finiEv] = &_ZNSt13random_device7_M_finiEv,
@@ -238,9 +719,14 @@ void *const g_plat_jt[PLAT_JT_COUNT] = {
     [PLAT_JT__ZdaPv] = &_ZdaPv,
     [PLAT_JT__ZdlPv] = &_ZdlPv,
     [PLAT_JT___aeabi_atexit] = &__aeabi_atexit,
+    [PLAT_JT___aeabi_cdcmpeq] = &__aeabi_cdcmpeq,
+    [PLAT_JT___aeabi_cdcmple] = &__aeabi_cdcmple,
+    [PLAT_JT___aeabi_cdrcmple] = &__aeabi_cdrcmple,
     [PLAT_JT___aeabi_d2f] = &__aeabi_d2f,
     [PLAT_JT___aeabi_d2iz] = &__aeabi_d2iz,
     [PLAT_JT___aeabi_d2lz] = &__aeabi_d2lz,
+    [PLAT_JT___aeabi_d2uiz] = &__aeabi_d2uiz,
+    [PLAT_JT___aeabi_d2ulz] = &__aeabi_d2ulz,
     [PLAT_JT___aeabi_dadd] = &__aeabi_dadd,
     [PLAT_JT___aeabi_dcmpeq] = &__aeabi_dcmpeq,
     [PLAT_JT___aeabi_dcmpge] = &__aeabi_dcmpge,
@@ -250,11 +736,14 @@ void *const g_plat_jt[PLAT_JT_COUNT] = {
     [PLAT_JT___aeabi_dcmpun] = &__aeabi_dcmpun,
     [PLAT_JT___aeabi_ddiv] = &__aeabi_ddiv,
     [PLAT_JT___aeabi_dmul] = &__aeabi_dmul,
+    [PLAT_JT___aeabi_drsub] = &__aeabi_drsub,
     [PLAT_JT___aeabi_dsub] = &__aeabi_dsub,
     [PLAT_JT___aeabi_f2d] = &__aeabi_f2d,
     [PLAT_JT___aeabi_i2d] = &__aeabi_i2d,
     [PLAT_JT___aeabi_l2d] = &__aeabi_l2d,
     [PLAT_JT___aeabi_ldivmod] = &__aeabi_ldivmod,
+    [PLAT_JT___aeabi_ui2d] = &__aeabi_ui2d,
+    [PLAT_JT___aeabi_ul2d] = &__aeabi_ul2d,
     [PLAT_JT___aeabi_uldivmod] = &__aeabi_uldivmod,
     [PLAT_JT___assert_func] = &__assert_func,
     [PLAT_JT___cxa_thread_atexit] = &__cxa_thread_atexit,
@@ -277,6 +766,7 @@ void *const g_plat_jt[PLAT_JT_COUNT] = {
     [PLAT_JT_cosh] = &cosh,
     [PLAT_JT_deregisterPSEventCallback] = &deregisterPSEventCallback,
     [PLAT_JT_exp] = &exp,
+    [PLAT_JT_fabs] = &fabs,
     [PLAT_JT_fclose] = &fclose,
     [PLAT_JT_feof] = &feof,
     [PLAT_JT_fflush] = &fflush,
@@ -294,6 +784,11 @@ void *const g_plat_jt[PLAT_JT_COUNT] = {
     [PLAT_JT_isspace] = &isspace,
     [PLAT_JT_localtime_r] = &localtime_r,
     [PLAT_JT_log] = &log,
+    [PLAT_JT_luat_mobile_config] = &luat_mobile_config,
+    [PLAT_JT_luat_rtos_task_create] = &luat_rtos_task_create,
+    [PLAT_JT_luat_rtos_task_sleep] = &luat_rtos_task_sleep,
+    [PLAT_JT_luat_uart_exist] = &luat_uart_exist,
+    [PLAT_JT_luat_uart_write] = &luat_uart_write,
     [PLAT_JT_malloc] = &malloc,
     [PLAT_JT_memchr] = &memchr,
     [PLAT_JT_memcmp] = &memcmp,
@@ -313,6 +808,8 @@ void *const g_plat_jt[PLAT_JT_COUNT] = {
     [PLAT_JT_putchar] = &putchar,
     [PLAT_JT_putenv] = &putenv,
     [PLAT_JT_puts] = &puts,
+    [PLAT_JT_pwrKeyIntHandler] = &pwrKeyIntHandler,
+    [PLAT_JT_rand] = &rand,
     [PLAT_JT_realloc] = &realloc,
     [PLAT_JT_registerPSEventCallback] = &registerPSEventCallback,
     [PLAT_JT_rngGenRandom] = &rngGenRandom,
@@ -321,27 +818,79 @@ void *const g_plat_jt[PLAT_JT_COUNT] = {
     [PLAT_JT_sinh] = &sinh,
     [PLAT_JT_slot_marker_read] = &slot_marker_read,
     [PLAT_JT_slot_marker_write] = &slot_marker_write,
+    [PLAT_JT_slpManAonWdtFeed] = &slpManAonWdtFeed,
+    [PLAT_JT_slpManAonWdtStop] = &slpManAonWdtStop,
     [PLAT_JT_slpManApplyPlatVoteHandle] = &slpManApplyPlatVoteHandle,
+    [PLAT_JT_slpManDeepSlpTimerDel] = &slpManDeepSlpTimerDel,
     [PLAT_JT_slpManDeepSlpTimerRegisterExpCb] = &slpManDeepSlpTimerRegisterExpCb,
     [PLAT_JT_slpManDeepSlpTimerStart] = &slpManDeepSlpTimerStart,
+    [PLAT_JT_slpManDrvVoteSleep] = &slpManDrvVoteSleep,
+    [PLAT_JT_slpManExcutePredefinedBackupCb] = &slpManExcutePredefinedBackupCb,
+    [PLAT_JT_slpManExcutePredefinedBackupCbInPaging] = &slpManExcutePredefinedBackupCbInPaging,
+    [PLAT_JT_slpManExcutePredefinedRestoreCb] = &slpManExcutePredefinedRestoreCb,
+    [PLAT_JT_slpManExcutePredefinedRestoreCbInPaging] = &slpManExcutePredefinedRestoreCbInPaging,
+    [PLAT_JT_slpManExcuteUsrdefinedBackupCb] = &slpManExcuteUsrdefinedBackupCb,
+    [PLAT_JT_slpManExcuteUsrdefinedRestoreCb] = &slpManExcuteUsrdefinedRestoreCb,
+    [PLAT_JT_slpManExtIntPreProcess] = &slpManExtIntPreProcess,
+    [PLAT_JT_slpManGetDrvBitmap] = &slpManGetDrvBitmap,
+    [PLAT_JT_slpManGetDrvVoteMask] = &slpManGetDrvVoteMask,
+    [PLAT_JT_slpManGetLastSlpState] = &slpManGetLastSlpState,
+    [PLAT_JT_slpManGetWakeupPadCfg] = &slpManGetWakeupPadCfg,
+    [PLAT_JT_slpManGetWakeupPinValue] = &slpManGetWakeupPinValue,
+    [PLAT_JT_slpManGivebackPlatVoteHandle] = &slpManGivebackPlatVoteHandle,
+    [PLAT_JT_slpManPlatGetSlpState] = &slpManPlatGetSlpState,
     [PLAT_JT_slpManPlatVoteDisableSleep] = &slpManPlatVoteDisableSleep,
     [PLAT_JT_slpManPlatVoteEnableSleep] = &slpManPlatVoteEnableSleep,
+    [PLAT_JT_slpManProductionTest] = &slpManProductionTest,
+    [PLAT_JT_slpManRegisterPredefinedBackupCb] = &slpManRegisterPredefinedBackupCb,
+    [PLAT_JT_slpManRegisterPredefinedRestoreCb] = &slpManRegisterPredefinedRestoreCb,
+    [PLAT_JT_slpManSetDrvVoteMask] = &slpManSetDrvVoteMask,
     [PLAT_JT_slpManSetPmuSleepMode] = &slpManSetPmuSleepMode,
+    [PLAT_JT_slpManSetWakeupPadCfg] = &slpManSetWakeupPadCfg,
+    [PLAT_JT_slpManStartPowerOff] = &slpManStartPowerOff,
+    [PLAT_JT_slpManUnregisterPredefinedBackupCb] = &slpManUnregisterPredefinedBackupCb,
+    [PLAT_JT_slpManUnregisterPredefinedRestoreCb] = &slpManUnregisterPredefinedRestoreCb,
+    [PLAT_JT_slpManUpdatePmuTimingCfg] = &slpManUpdatePmuTimingCfg,
     [PLAT_JT_snprintf] = &snprintf,
+    [PLAT_JT_soc_call_function_in_service] = &soc_call_function_in_service,
+    [PLAT_JT_soc_cms_proc] = &soc_cms_proc,
+    [PLAT_JT_soc_disable_tcpip_use_default_pdp] = &soc_disable_tcpip_use_default_pdp,
+    [PLAT_JT_soc_free_later] = &soc_free_later,
+    [PLAT_JT_soc_get_poweron_time_ms] = &soc_get_poweron_time_ms,
+    [PLAT_JT_soc_get_poweron_time_tick] = &soc_get_poweron_time_tick,
+    [PLAT_JT_soc_info] = &soc_info,
+    [PLAT_JT_soc_mobile_default_pdn_ip_type] = &soc_mobile_default_pdn_ip_type,
+    [PLAT_JT_soc_mobile_search_cell_info_async] = &soc_mobile_search_cell_info_async,
+    [PLAT_JT_soc_mobile_set_rrc_release_time] = &soc_mobile_set_rrc_release_time,
+    [PLAT_JT_soc_netif_input_prepare] = &soc_netif_input_prepare,
     [PLAT_JT_soc_power_mode] = &soc_power_mode,
+    [PLAT_JT_soc_printf] = &soc_printf,
+    [PLAT_JT_soc_set_usb_sleep] = &soc_set_usb_sleep,
+    [PLAT_JT_soc_uart0_set_log_off] = &soc_uart0_set_log_off,
+    [PLAT_JT_soc_unilog_callback] = &soc_unilog_callback,
+    [PLAT_JT_soc_usb_onoff] = &soc_usb_onoff,
+    [PLAT_JT_soc_usb_serial_output] = &soc_usb_serial_output,
+    [PLAT_JT_soc_vsprintf] = &soc_vsprintf,
     [PLAT_JT_sprintf] = &sprintf,
     [PLAT_JT_sqrt] = &sqrt,
+    [PLAT_JT_srand] = &srand,
+    [PLAT_JT_sscanf] = &sscanf,
+    [PLAT_JT_strcat] = &strcat,
     [PLAT_JT_strchr] = &strchr,
     [PLAT_JT_strcmp] = &strcmp,
     [PLAT_JT_strcpy] = &strcpy,
+    [PLAT_JT_strcspn] = &strcspn,
     [PLAT_JT_strdup] = &strdup,
     [PLAT_JT_strerror] = &strerror,
     [PLAT_JT_strlen] = &strlen,
+    [PLAT_JT_strncat] = &strncat,
     [PLAT_JT_strncmp] = &strncmp,
     [PLAT_JT_strncpy] = &strncpy,
     [PLAT_JT_strnlen] = &strnlen,
+    [PLAT_JT_strspn] = &strspn,
     [PLAT_JT_strstr] = &strstr,
     [PLAT_JT_strtod] = &strtod,
+    [PLAT_JT_strtoul] = &strtoul,
     [PLAT_JT_tan] = &tan,
     [PLAT_JT_tanh] = &tanh,
     [PLAT_JT_tcp_accept] = &tcp_accept,
@@ -375,6 +924,7 @@ void *const g_plat_jt[PLAT_JT_COUNT] = {
     [PLAT_JT_vQueueDelete] = &vQueueDelete,
     [PLAT_JT_vTaskDelete] = &vTaskDelete,
     [PLAT_JT_vfprintf] = &vfprintf,
+    [PLAT_JT_vsnprintf] = &vsnprintf,
     [PLAT_JT_xQueueCreateMutex] = &xQueueCreateMutex,
     [PLAT_JT_xQueueGenericCreate] = &xQueueGenericCreate,
     [PLAT_JT_xQueueGenericReceive] = &xQueueGenericReceive,
@@ -398,184 +948,459 @@ void *const g_plat_jt[PLAT_JT_COUNT] = {
         );                                                           \
     }
 
-PLAT_STUB(BSP_QSPI_Erase_Safe, 0)
-PLAT_STUB(BSP_QSPI_Write_Safe, 1)
-PLAT_STUB(BSP_SetPlatConfigItemValue, 2)
-PLAT_STUB(GPIO_Config, 3)
-PLAT_STUB(GPIO_IomuxEC618, 4)
-PLAT_STUB(GPIO_Output, 5)
-PLAT_STUB(GPIO_PullConfig, 6)
-PLAT_STUB(GPIO_clearInterruptFlags, 7)
-PLAT_STUB(GPIO_getInterruptFlags, 8)
-PLAT_STUB(GPIO_interruptConfig, 9)
-PLAT_STUB(GPIO_pinConfig, 10)
-PLAT_STUB(GPIO_pinRead, 11)
-PLAT_STUB(GPIO_pinWrite, 12)
-PLAT_STUB(OsaSystemTimeReadRamUtc, 13)
-PLAT_STUB(OsaTimerSync, 14)
-PLAT_STUB(ResetStateGet, 15)
-PLAT_STUB(Uart_BaseInitEx, 16)
-PLAT_STUB(Uart_ChangeBR, 17)
-PLAT_STUB(Uart_DeInit, 18)
-PLAT_STUB(Uart_IsTSREmpty, 19)
-PLAT_STUB(Uart_RxBufferClear, 20)
-PLAT_STUB(Uart_RxBufferRead, 21)
-PLAT_STUB(Uart_TxTaskSafe, 22)
-PLAT_STUB(XIC_EnableIRQ, 23)
-PLAT_STUB(XIC_SetVector, 24)
-PLAT_STUB(_ZNSt13random_device7_M_finiEv, 25)
-PLAT_STUB(_ZNSt13random_device7_M_initERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE, 26)
-PLAT_STUB(_ZNSt13random_device9_M_getvalEv, 27)
-PLAT_STUB(_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_disposeEv, 28)
-PLAT_STUB(_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE13_S_copy_charsEPcPKcS7_, 29)
-PLAT_STUB(_ZSt25__throw_bad_function_callv, 30)
-PLAT_STUB(_ZdaPv, 31)
-PLAT_STUB(_ZdlPv, 32)
-PLAT_STUB(__aeabi_atexit, 33)
-PLAT_STUB(__aeabi_d2f, 34)
-PLAT_STUB(__aeabi_d2iz, 35)
-PLAT_STUB(__aeabi_d2lz, 36)
-PLAT_STUB(__aeabi_dadd, 37)
-PLAT_STUB(__aeabi_dcmpeq, 38)
-PLAT_STUB(__aeabi_dcmpge, 39)
-PLAT_STUB(__aeabi_dcmpgt, 40)
-PLAT_STUB(__aeabi_dcmple, 41)
-PLAT_STUB(__aeabi_dcmplt, 42)
-PLAT_STUB(__aeabi_dcmpun, 43)
-PLAT_STUB(__aeabi_ddiv, 44)
-PLAT_STUB(__aeabi_dmul, 45)
-PLAT_STUB(__aeabi_dsub, 46)
-PLAT_STUB(__aeabi_f2d, 47)
-PLAT_STUB(__aeabi_i2d, 48)
-PLAT_STUB(__aeabi_l2d, 49)
-PLAT_STUB(__aeabi_ldivmod, 50)
-PLAT_STUB(__aeabi_uldivmod, 51)
-PLAT_STUB(__assert_func, 52)
-PLAT_STUB(__cxa_thread_atexit, 53)
-PLAT_STUB(__emutls_get_address, 54)
-PLAT_STUB(__popcountdi2, 55)
-PLAT_STUB(__popcountsi2, 56)
-PLAT_STUB(__wrap_time, 57)
-PLAT_STUB(abort, 58)
-PLAT_STUB(acos, 59)
-PLAT_STUB(aligned_alloc, 60)
-PLAT_STUB(apmuSetDeepestSleepMode, 61)
-PLAT_STUB(appGetECBCInfoSync, 62)
-PLAT_STUB(appSetCFUN, 63)
-PLAT_STUB(asin, 64)
-PLAT_STUB(atan, 65)
-PLAT_STUB(atan2, 66)
-PLAT_STUB(calloc, 67)
-PLAT_STUB(ceil, 68)
-PLAT_STUB(cos, 69)
-PLAT_STUB(cosh, 70)
-PLAT_STUB(deregisterPSEventCallback, 71)
-PLAT_STUB(exp, 72)
-PLAT_STUB(fclose, 73)
-PLAT_STUB(feof, 74)
-PLAT_STUB(fflush, 75)
-PLAT_STUB(floor, 76)
-PLAT_STUB(fmod, 77)
-PLAT_STUB(fopen, 78)
-PLAT_STUB(fotaNvmNfsPeInit, 79)
-PLAT_STUB(fputc, 80)
-PLAT_STUB(fputs, 81)
-PLAT_STUB(fread, 82)
-PLAT_STUB(free, 83)
-PLAT_STUB(fseek, 84)
-PLAT_STUB(fwrite, 85)
-PLAT_STUB(gmtime_r, 86)
-PLAT_STUB(isspace, 87)
-PLAT_STUB(localtime_r, 88)
-PLAT_STUB(log, 89)
-PLAT_STUB(malloc, 90)
-PLAT_STUB(memchr, 91)
-PLAT_STUB(memcmp, 92)
-PLAT_STUB(memcpy, 93)
-PLAT_STUB(memmove, 94)
-PLAT_STUB(memset, 95)
-PLAT_STUB(mktime, 96)
-PLAT_STUB(osDelay, 97)
-PLAT_STUB(osKernelGetTickCount, 98)
-PLAT_STUB(pbuf_alloc, 99)
-PLAT_STUB(pbuf_cat, 100)
-PLAT_STUB(pbuf_free, 101)
-PLAT_STUB(pbuf_ref, 102)
-PLAT_STUB(pow, 103)
-PLAT_STUB(printf, 104)
-PLAT_STUB(psSetCdgcont, 105)
-PLAT_STUB(putchar, 106)
-PLAT_STUB(putenv, 107)
-PLAT_STUB(puts, 108)
-PLAT_STUB(realloc, 109)
-PLAT_STUB(registerPSEventCallback, 110)
-PLAT_STUB(rngGenRandom, 111)
-PLAT_STUB(round, 112)
-PLAT_STUB(sin, 113)
-PLAT_STUB(sinh, 114)
-PLAT_STUB(slot_marker_read, 115)
-PLAT_STUB(slot_marker_write, 116)
-PLAT_STUB(slpManApplyPlatVoteHandle, 117)
-PLAT_STUB(slpManDeepSlpTimerRegisterExpCb, 118)
-PLAT_STUB(slpManDeepSlpTimerStart, 119)
-PLAT_STUB(slpManPlatVoteDisableSleep, 120)
-PLAT_STUB(slpManPlatVoteEnableSleep, 121)
-PLAT_STUB(slpManSetPmuSleepMode, 122)
-PLAT_STUB(snprintf, 123)
-PLAT_STUB(soc_power_mode, 124)
-PLAT_STUB(sprintf, 125)
-PLAT_STUB(sqrt, 126)
-PLAT_STUB(strchr, 127)
-PLAT_STUB(strcmp, 128)
-PLAT_STUB(strcpy, 129)
-PLAT_STUB(strdup, 130)
-PLAT_STUB(strerror, 131)
-PLAT_STUB(strlen, 132)
-PLAT_STUB(strncmp, 133)
-PLAT_STUB(strncpy, 134)
-PLAT_STUB(strnlen, 135)
-PLAT_STUB(strstr, 136)
-PLAT_STUB(strtod, 137)
-PLAT_STUB(tan, 138)
-PLAT_STUB(tanh, 139)
-PLAT_STUB(tcp_accept, 140)
-PLAT_STUB(tcp_arg, 141)
-PLAT_STUB(tcp_bind, 142)
-PLAT_STUB(tcp_close, 143)
-PLAT_STUB(tcp_connect, 144)
-PLAT_STUB(tcp_err, 145)
-PLAT_STUB(tcp_listen_with_backlog, 146)
-PLAT_STUB(tcp_new, 147)
-PLAT_STUB(tcp_output, 148)
-PLAT_STUB(tcp_recv, 149)
-PLAT_STUB(tcp_recved, 150)
-PLAT_STUB(tcp_sent, 151)
-PLAT_STUB(tcp_shutdown, 152)
-PLAT_STUB(tcp_write, 153)
-PLAT_STUB(tcpip_callback_with_block, 154)
-PLAT_STUB(trunc, 155)
-PLAT_STUB(tzset, 156)
-PLAT_STUB(udp_bind, 157)
-PLAT_STUB(udp_connect, 158)
-PLAT_STUB(udp_new, 159)
-PLAT_STUB(udp_recv, 160)
-PLAT_STUB(udp_remove, 161)
-PLAT_STUB(udp_send, 162)
-PLAT_STUB(udp_sendto, 163)
-PLAT_STUB(vPortGetHeapStats, 164)
-PLAT_STUB(vPortGetHeapTag, 165)
-PLAT_STUB(vPortIterateAllocations, 166)
-PLAT_STUB(vPortSetHeapTag, 167)
-PLAT_STUB(vQueueDelete, 168)
-PLAT_STUB(vTaskDelete, 169)
-PLAT_STUB(vfprintf, 170)
-PLAT_STUB(xQueueCreateMutex, 171)
-PLAT_STUB(xQueueGenericCreate, 172)
-PLAT_STUB(xQueueGenericReceive, 173)
-PLAT_STUB(xQueueGenericSend, 174)
-PLAT_STUB(xQueueGenericSendFromISR, 175)
-PLAT_STUB(xQueueGetMutexHolder, 176)
-PLAT_STUB(xTaskCreate, 177)
-PLAT_STUB(xTaskGenericNotify, 178)
-PLAT_STUB(xTaskGetCurrentTaskHandle, 179)
-PLAT_STUB(xTaskNotifyWait, 180)
+PLAT_STUB(ADC_channelDeInit, 0)
+PLAT_STUB(ADC_channelInit, 1)
+PLAT_STUB(ADC_getDefaultConfig, 2)
+PLAT_STUB(ADC_startConversion, 3)
+PLAT_STUB(ARM_I2C_GetVersion, 4)
+PLAT_STUB(ARM_USART_GetVersion, 5)
+PLAT_STUB(BSP_CommonInit, 6)
+PLAT_STUB(BSP_CustomInit, 7)
+PLAT_STUB(BSP_DeInit_SmallImg, 8)
+PLAT_STUB(BSP_FlashNVICSwReset, 9)
+PLAT_STUB(BSP_FlashSetGvarforSlp2, 10)
+PLAT_STUB(BSP_GetFSAssertCount, 11)
+PLAT_STUB(BSP_GetPlatConfigItemValue, 12)
+PLAT_STUB(BSP_GetRawFlashPlatConfig, 13)
+PLAT_STUB(BSP_Init_SmallImg, 14)
+PLAT_STUB(BSP_LoadPlatConfigFromFs, 15)
+PLAT_STUB(BSP_LoadPlatConfigFromRawFlash, 16)
+PLAT_STUB(BSP_QSPI_Erase_Cmd, 17)
+PLAT_STUB(BSP_QSPI_Erase_Proc, 18)
+PLAT_STUB(BSP_QSPI_Erase_Safe, 19)
+PLAT_STUB(BSP_QSPI_Erase_Sector, 20)
+PLAT_STUB(BSP_QSPI_Init, 21)
+PLAT_STUB(BSP_QSPI_Read_Safe, 22)
+PLAT_STUB(BSP_QSPI_Read_Status_Reg, 23)
+PLAT_STUB(BSP_QSPI_SWReset, 24)
+PLAT_STUB(BSP_QSPI_Write, 25)
+PLAT_STUB(BSP_QSPI_Write_Gran_Cmd, 26)
+PLAT_STUB(BSP_QSPI_Write_Proc, 27)
+PLAT_STUB(BSP_QSPI_Write_Safe, 28)
+PLAT_STUB(BSP_QSPI_Write_Volatile_Status_Reg, 29)
+PLAT_STUB(BSP_QSPI_XIP_Mode_Disable, 30)
+PLAT_STUB(BSP_QSPI_XIP_Mode_Enable, 31)
+PLAT_STUB(BSP_SavePlatConfigToFs, 32)
+PLAT_STUB(BSP_SavePlatConfigToRawFlash, 33)
+PLAT_STUB(BSP_SetFSAssertCount, 34)
+PLAT_STUB(BSP_SetFsPorDefaultValue, 35)
+PLAT_STUB(BSP_SetPlatConfigItemValue, 36)
+PLAT_STUB(BSP_UsbDeInit, 37)
+PLAT_STUB(BSP_UsbInit, 38)
+PLAT_STUB(CLOCK_AssertChkBeforeSlp, 39)
+PLAT_STUB(CLOCK_Trace, 40)
+PLAT_STUB(CLOCK_checkClkID, 41)
+PLAT_STUB(CLOCK_clockDisable, 42)
+PLAT_STUB(CLOCK_clockEnable, 43)
+PLAT_STUB(CLOCK_clockReset, 44)
+PLAT_STUB(CLOCK_getClockFreq, 45)
+PLAT_STUB(CLOCK_setClockDiv, 46)
+PLAT_STUB(CLOCK_setClockSrc, 47)
+PLAT_STUB(DMA_ForceStartStream, 48)
+PLAT_STUB(DMA_buildDescriptor, 49)
+PLAT_STUB(DMA_closeChannel, 50)
+PLAT_STUB(DMA_disableChannelInterrupts, 51)
+PLAT_STUB(DMA_enableChannelInterrupts, 52)
+PLAT_STUB(DMA_getChannelCount, 53)
+PLAT_STUB(DMA_getChannelCurrentTargetAddress, 54)
+PLAT_STUB(DMA_init, 55)
+PLAT_STUB(DMA_loadChannelDescriptorAndRun, 56)
+PLAT_STUB(DMA_loadChannelFirstDescriptor, 57)
+PLAT_STUB(DMA_openChannel, 58)
+PLAT_STUB(DMA_resetChannel, 59)
+PLAT_STUB(DMA_resumeChannel, 60)
+PLAT_STUB(DMA_rigisterChannelCallback, 61)
+PLAT_STUB(DMA_setChannelRequestSource, 62)
+PLAT_STUB(DMA_setDescriptorTransferLen, 63)
+PLAT_STUB(DMA_startChannel, 64)
+PLAT_STUB(DMA_stopChannel, 65)
+PLAT_STUB(DMA_stopChannelNoWait, 66)
+PLAT_STUB(DMA_suspendChannel, 67)
+PLAT_STUB(DMA_transferSetup, 68)
+PLAT_STUB(Driver_I2C0, 69)
+PLAT_STUB(Driver_I2C1, 70)
+PLAT_STUB(Driver_USART1, 71)
+PLAT_STUB(GPIO_Config, 72)
+PLAT_STUB(GPIO_ExtiConfig, 73)
+PLAT_STUB(GPIO_ExtiSetCB, 74)
+PLAT_STUB(GPIO_FastOutput, 75)
+PLAT_STUB(GPIO_Input, 76)
+PLAT_STUB(GPIO_InputMulti, 77)
+PLAT_STUB(GPIO_IomuxEC618, 78)
+PLAT_STUB(GPIO_OutPulse, 79)
+PLAT_STUB(GPIO_Output, 80)
+PLAT_STUB(GPIO_OutputMulti, 81)
+PLAT_STUB(GPIO_PullConfig, 82)
+PLAT_STUB(GPIO_ToPadEC618, 83)
+PLAT_STUB(GPIO_Toggle, 84)
+PLAT_STUB(GPIO_ToggleMulti, 85)
+PLAT_STUB(GPIO_clearInterruptFlags, 86)
+PLAT_STUB(GPIO_driverInit, 87)
+PLAT_STUB(GPIO_enterLowPowerStatePrepare, 88)
+PLAT_STUB(GPIO_exitLowPowerStateRestore, 89)
+PLAT_STUB(GPIO_getInterruptFlags, 90)
+PLAT_STUB(GPIO_interruptConfig, 91)
+PLAT_STUB(GPIO_pinConfig, 92)
+PLAT_STUB(GPIO_pinRead, 93)
+PLAT_STUB(GPIO_pinWrite, 94)
+PLAT_STUB(GPR_Is51MClockInUse, 95)
+PLAT_STUB(GPR_USBCHRST_ResetReq_SetVal, 96)
+PLAT_STUB(GPR_USBCPhy_ResetReq_SetVal, 97)
+PLAT_STUB(GPR_USBPAPB_ResetReq_SetVal, 98)
+PLAT_STUB(GPR_USBPPor_ResetReq_SetVal, 99)
+PLAT_STUB(GPR_USBPUtmi_ResetReq_SetVal, 100)
+PLAT_STUB(GPR_USB_DM_Ctrl_Disable_Rst, 101)
+PLAT_STUB(GPR_USB_DM_Ctrl_Enable_Without_Usbcprst, 102)
+PLAT_STUB(GPR_apAccessEnter, 103)
+PLAT_STUB(GPR_apAccessExit, 104)
+PLAT_STUB(GPR_apDFCVote4CP, 105)
+PLAT_STUB(GPR_apDFCVoteIdle, 106)
+PLAT_STUB(GPR_apSysClkForceOnControl, 107)
+PLAT_STUB(GPR_bootSetting, 108)
+PLAT_STUB(GPR_clockDisable, 109)
+PLAT_STUB(GPR_clockEnable, 110)
+PLAT_STUB(GPR_clockEnableCheck, 111)
+PLAT_STUB(GPR_cpGetRstSrc, 112)
+PLAT_STUB(GPR_cpResetCfgSet, 113)
+PLAT_STUB(GPR_csmbAccessEnter, 114)
+PLAT_STUB(GPR_csmbAccessExit, 115)
+PLAT_STUB(GPR_flashClockDisable, 116)
+PLAT_STUB(GPR_flashClockEnable, 117)
+PLAT_STUB(GPR_flashSWReset, 118)
+PLAT_STUB(GPR_getClockFreq, 119)
+PLAT_STUB(GPR_getSystickClk, 120)
+PLAT_STUB(GPR_initialize, 121)
+PLAT_STUB(GPR_lockUpActionCtrl, 122)
+PLAT_STUB(GPR_rmiHrstRel, 123)
+PLAT_STUB(GPR_setApbGprAcg, 124)
+PLAT_STUB(GPR_setClockDiv, 125)
+PLAT_STUB(GPR_setClockSrc, 126)
+PLAT_STUB(GPR_setFlashClockDiv, 127)
+PLAT_STUB(GPR_setFlashClockSrc, 128)
+PLAT_STUB(GPR_swReset, 129)
+PLAT_STUB(GPR_swResetModule, 130)
+PLAT_STUB(GPR_switchSystickClk, 131)
+PLAT_STUB(GPR_unilogSWReset, 132)
+PLAT_STUB(GPR_usbUlgClr, 133)
+PLAT_STUB(GPR_usbUlgSet, 134)
+PLAT_STUB(HAL_ADC_CalibrateRawCode, 135)
+PLAT_STUB(HAL_ADC_ConvertThermalRawCodeToTemperatureHighAccuracy, 136)
+PLAT_STUB(HAL_QSPI_Command, 137)
+PLAT_STUB(HAL_QSPI_Config, 138)
+PLAT_STUB(HAL_QSPI_Init, 139)
+PLAT_STUB(HAL_QSPI_Receive, 140)
+PLAT_STUB(HAL_QSPI_Set_CPflh_Clk, 141)
+PLAT_STUB(HAL_QSPI_Set_Clk, 142)
+PLAT_STUB(HAL_QSPI_Transmit, 143)
+PLAT_STUB(HAL_QSPI_XIP_Enable, 144)
+PLAT_STUB(HAL_UartDumpPortCheck, 145)
+PLAT_STUB(HAL_UartDumpPortInit, 146)
+PLAT_STUB(HAL_UartDumpPortSend, 147)
+PLAT_STUB(I2C_Control, 148)
+PLAT_STUB(I2C_GetCapabilities, 149)
+PLAT_STUB(I2C_GetClockFreq, 150)
+PLAT_STUB(I2C_GetDataCount, 151)
+PLAT_STUB(I2C_GetStatus, 152)
+PLAT_STUB(I2C_Initialize, 153)
+PLAT_STUB(I2C_MasterReceive, 154)
+PLAT_STUB(I2C_MasterTransmit, 155)
+PLAT_STUB(I2C_PowerControl, 156)
+PLAT_STUB(I2C_SlaveReceive, 157)
+PLAT_STUB(I2C_Uninitialize, 158)
+PLAT_STUB(OsaSystemTimeReadRamUtc, 159)
+PLAT_STUB(OsaTimerSync, 160)
+PLAT_STUB(PAD_driverInit, 161)
+PLAT_STUB(PAD_enterLowPowerStatePrepare, 162)
+PLAT_STUB(PAD_exitLowPowerStateRestore, 163)
+PLAT_STUB(PAD_getDefaultConfig, 164)
+PLAT_STUB(PAD_setPinConfig, 165)
+PLAT_STUB(PAD_setPinPullConfig, 166)
+PLAT_STUB(Pad0_WakeupIntHandler, 167)
+PLAT_STUB(Pad1_WakeupIntHandler, 168)
+PLAT_STUB(Pad2_WakeupIntHandler, 169)
+PLAT_STUB(Pad3_WakeupIntHandler, 170)
+PLAT_STUB(Pad4_WakeupIntHandler, 171)
+PLAT_STUB(Pad5_WakeupIntHandler, 172)
+PLAT_STUB(QSPI_CheckQEnFlag, 173)
+PLAT_STUB(QSPI_PollingBusyFlagIntableOnce, 174)
+PLAT_STUB(RTC_WakeupIntHandler, 175)
+PLAT_STUB(ResetStateGet, 176)
+PLAT_STUB(TIMER_clearInterruptFlags, 177)
+PLAT_STUB(TIMER_deInit, 178)
+PLAT_STUB(TIMER_driverInit, 179)
+PLAT_STUB(TIMER_getDefaultConfig, 180)
+PLAT_STUB(TIMER_getInterruptFlags, 181)
+PLAT_STUB(TIMER_init, 182)
+PLAT_STUB(TIMER_interruptConfig, 183)
+PLAT_STUB(TIMER_start, 184)
+PLAT_STUB(TIMER_stop, 185)
+PLAT_STUB(UART_flush, 186)
+PLAT_STUB(UART_init, 187)
+PLAT_STUB(UART_receive, 188)
+PLAT_STUB(UART_send, 189)
+PLAT_STUB(UART_setBaudrate, 190)
+PLAT_STUB(USART0_IRQHandler, 191)
+PLAT_STUB(USART1_DmaRxEvent, 192)
+PLAT_STUB(USART1_DmaTxEvent, 193)
+PLAT_STUB(USART1_IRQHandler, 194)
+PLAT_STUB(USART2_DmaRxEvent, 195)
+PLAT_STUB(USART2_IRQHandler, 196)
+PLAT_STUB(USART_Control, 197)
+PLAT_STUB(USART_DmaRxEvent, 198)
+PLAT_STUB(USART_DmaTxEvent, 199)
+PLAT_STUB(USART_GetBaudRate, 200)
+PLAT_STUB(USART_GetCapabilities, 201)
+PLAT_STUB(USART_GetModemStatus, 202)
+PLAT_STUB(USART_GetRxCount, 203)
+PLAT_STUB(USART_GetStatus, 204)
+PLAT_STUB(USART_GetTxCount, 205)
+PLAT_STUB(USART_IRQHandler, 206)
+PLAT_STUB(USART_Initialize, 207)
+PLAT_STUB(USART_PowerControl, 208)
+PLAT_STUB(USART_Receive, 209)
+PLAT_STUB(USART_Send, 210)
+PLAT_STUB(USART_SendPolling, 211)
+PLAT_STUB(USART_SetBaudrate, 212)
+PLAT_STUB(USART_SetModemControl, 213)
+PLAT_STUB(USART_Uninitialize, 214)
+PLAT_STUB(Uart_BaseInitEx, 215)
+PLAT_STUB(Uart_ChangeBR, 216)
+PLAT_STUB(Uart_DeInit, 217)
+PLAT_STUB(Uart_IsTSREmpty, 218)
+PLAT_STUB(Uart_RxBufferClear, 219)
+PLAT_STUB(Uart_RxBufferRead, 220)
+PLAT_STUB(Uart_TxTaskSafe, 221)
+PLAT_STUB(WDT_deInit, 222)
+PLAT_STUB(WDT_getStartStatus, 223)
+PLAT_STUB(WDT_init, 224)
+PLAT_STUB(WDT_kick, 225)
+PLAT_STUB(WDT_start, 226)
+PLAT_STUB(WDT_stop, 227)
+PLAT_STUB(WDT_unlock, 228)
+PLAT_STUB(XIC_EnableIRQ, 229)
+PLAT_STUB(XIC_SetVector, 230)
+PLAT_STUB(_ZNSt13random_device7_M_finiEv, 231)
+PLAT_STUB(_ZNSt13random_device7_M_initERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE, 232)
+PLAT_STUB(_ZNSt13random_device9_M_getvalEv, 233)
+PLAT_STUB(_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_disposeEv, 234)
+PLAT_STUB(_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE13_S_copy_charsEPcPKcS7_, 235)
+PLAT_STUB(_ZSt25__throw_bad_function_callv, 236)
+PLAT_STUB(_ZdaPv, 237)
+PLAT_STUB(_ZdlPv, 238)
+PLAT_STUB(__aeabi_atexit, 239)
+PLAT_STUB(__aeabi_cdcmpeq, 240)
+PLAT_STUB(__aeabi_cdcmple, 241)
+PLAT_STUB(__aeabi_cdrcmple, 242)
+PLAT_STUB(__aeabi_d2f, 243)
+PLAT_STUB(__aeabi_d2iz, 244)
+PLAT_STUB(__aeabi_d2lz, 245)
+PLAT_STUB(__aeabi_d2uiz, 246)
+PLAT_STUB(__aeabi_d2ulz, 247)
+PLAT_STUB(__aeabi_dadd, 248)
+PLAT_STUB(__aeabi_dcmpeq, 249)
+PLAT_STUB(__aeabi_dcmpge, 250)
+PLAT_STUB(__aeabi_dcmpgt, 251)
+PLAT_STUB(__aeabi_dcmple, 252)
+PLAT_STUB(__aeabi_dcmplt, 253)
+PLAT_STUB(__aeabi_dcmpun, 254)
+PLAT_STUB(__aeabi_ddiv, 255)
+PLAT_STUB(__aeabi_dmul, 256)
+PLAT_STUB(__aeabi_drsub, 257)
+PLAT_STUB(__aeabi_dsub, 258)
+PLAT_STUB(__aeabi_f2d, 259)
+PLAT_STUB(__aeabi_i2d, 260)
+PLAT_STUB(__aeabi_l2d, 261)
+PLAT_STUB(__aeabi_ldivmod, 262)
+PLAT_STUB(__aeabi_ui2d, 263)
+PLAT_STUB(__aeabi_ul2d, 264)
+PLAT_STUB(__aeabi_uldivmod, 265)
+PLAT_STUB(__assert_func, 266)
+PLAT_STUB(__cxa_thread_atexit, 267)
+PLAT_STUB(__emutls_get_address, 268)
+PLAT_STUB(__popcountdi2, 269)
+PLAT_STUB(__popcountsi2, 270)
+PLAT_STUB(__wrap_time, 271)
+PLAT_STUB(abort, 272)
+PLAT_STUB(acos, 273)
+PLAT_STUB(aligned_alloc, 274)
+PLAT_STUB(apmuSetDeepestSleepMode, 275)
+PLAT_STUB(appGetECBCInfoSync, 276)
+PLAT_STUB(appSetCFUN, 277)
+PLAT_STUB(asin, 278)
+PLAT_STUB(atan, 279)
+PLAT_STUB(atan2, 280)
+PLAT_STUB(calloc, 281)
+PLAT_STUB(ceil, 282)
+PLAT_STUB(cos, 283)
+PLAT_STUB(cosh, 284)
+PLAT_STUB(deregisterPSEventCallback, 285)
+PLAT_STUB(exp, 286)
+PLAT_STUB(fabs, 287)
+PLAT_STUB(fclose, 288)
+PLAT_STUB(feof, 289)
+PLAT_STUB(fflush, 290)
+PLAT_STUB(floor, 291)
+PLAT_STUB(fmod, 292)
+PLAT_STUB(fopen, 293)
+PLAT_STUB(fotaNvmNfsPeInit, 294)
+PLAT_STUB(fputc, 295)
+PLAT_STUB(fputs, 296)
+PLAT_STUB(fread, 297)
+PLAT_STUB(free, 298)
+PLAT_STUB(fseek, 299)
+PLAT_STUB(fwrite, 300)
+PLAT_STUB(gmtime_r, 301)
+PLAT_STUB(isspace, 302)
+PLAT_STUB(localtime_r, 303)
+PLAT_STUB(log, 304)
+PLAT_STUB(luat_mobile_config, 305)
+PLAT_STUB(luat_rtos_task_create, 306)
+PLAT_STUB(luat_rtos_task_sleep, 307)
+PLAT_STUB(luat_uart_exist, 308)
+PLAT_STUB(luat_uart_write, 309)
+PLAT_STUB(malloc, 310)
+PLAT_STUB(memchr, 311)
+PLAT_STUB(memcmp, 312)
+PLAT_STUB(memcpy, 313)
+PLAT_STUB(memmove, 314)
+PLAT_STUB(memset, 315)
+PLAT_STUB(mktime, 316)
+PLAT_STUB(osDelay, 317)
+PLAT_STUB(osKernelGetTickCount, 318)
+PLAT_STUB(pbuf_alloc, 319)
+PLAT_STUB(pbuf_cat, 320)
+PLAT_STUB(pbuf_free, 321)
+PLAT_STUB(pbuf_ref, 322)
+PLAT_STUB(pow, 323)
+PLAT_STUB(printf, 324)
+PLAT_STUB(psSetCdgcont, 325)
+PLAT_STUB(putchar, 326)
+PLAT_STUB(putenv, 327)
+PLAT_STUB(puts, 328)
+PLAT_STUB(pwrKeyIntHandler, 329)
+PLAT_STUB(rand, 330)
+PLAT_STUB(realloc, 331)
+PLAT_STUB(registerPSEventCallback, 332)
+PLAT_STUB(rngGenRandom, 333)
+PLAT_STUB(round, 334)
+PLAT_STUB(sin, 335)
+PLAT_STUB(sinh, 336)
+PLAT_STUB(slot_marker_read, 337)
+PLAT_STUB(slot_marker_write, 338)
+PLAT_STUB(slpManAonWdtFeed, 339)
+PLAT_STUB(slpManAonWdtStop, 340)
+PLAT_STUB(slpManApplyPlatVoteHandle, 341)
+PLAT_STUB(slpManDeepSlpTimerDel, 342)
+PLAT_STUB(slpManDeepSlpTimerRegisterExpCb, 343)
+PLAT_STUB(slpManDeepSlpTimerStart, 344)
+PLAT_STUB(slpManDrvVoteSleep, 345)
+PLAT_STUB(slpManExcutePredefinedBackupCb, 346)
+PLAT_STUB(slpManExcutePredefinedBackupCbInPaging, 347)
+PLAT_STUB(slpManExcutePredefinedRestoreCb, 348)
+PLAT_STUB(slpManExcutePredefinedRestoreCbInPaging, 349)
+PLAT_STUB(slpManExcuteUsrdefinedBackupCb, 350)
+PLAT_STUB(slpManExcuteUsrdefinedRestoreCb, 351)
+PLAT_STUB(slpManExtIntPreProcess, 352)
+PLAT_STUB(slpManGetDrvBitmap, 353)
+PLAT_STUB(slpManGetDrvVoteMask, 354)
+PLAT_STUB(slpManGetLastSlpState, 355)
+PLAT_STUB(slpManGetWakeupPadCfg, 356)
+PLAT_STUB(slpManGetWakeupPinValue, 357)
+PLAT_STUB(slpManGivebackPlatVoteHandle, 358)
+PLAT_STUB(slpManPlatGetSlpState, 359)
+PLAT_STUB(slpManPlatVoteDisableSleep, 360)
+PLAT_STUB(slpManPlatVoteEnableSleep, 361)
+PLAT_STUB(slpManProductionTest, 362)
+PLAT_STUB(slpManRegisterPredefinedBackupCb, 363)
+PLAT_STUB(slpManRegisterPredefinedRestoreCb, 364)
+PLAT_STUB(slpManSetDrvVoteMask, 365)
+PLAT_STUB(slpManSetPmuSleepMode, 366)
+PLAT_STUB(slpManSetWakeupPadCfg, 367)
+PLAT_STUB(slpManStartPowerOff, 368)
+PLAT_STUB(slpManUnregisterPredefinedBackupCb, 369)
+PLAT_STUB(slpManUnregisterPredefinedRestoreCb, 370)
+PLAT_STUB(slpManUpdatePmuTimingCfg, 371)
+PLAT_STUB(snprintf, 372)
+PLAT_STUB(soc_call_function_in_service, 373)
+PLAT_STUB(soc_cms_proc, 374)
+PLAT_STUB(soc_disable_tcpip_use_default_pdp, 375)
+PLAT_STUB(soc_free_later, 376)
+PLAT_STUB(soc_get_poweron_time_ms, 377)
+PLAT_STUB(soc_get_poweron_time_tick, 378)
+PLAT_STUB(soc_info, 379)
+PLAT_STUB(soc_mobile_default_pdn_ip_type, 380)
+PLAT_STUB(soc_mobile_search_cell_info_async, 381)
+PLAT_STUB(soc_mobile_set_rrc_release_time, 382)
+PLAT_STUB(soc_netif_input_prepare, 383)
+PLAT_STUB(soc_power_mode, 384)
+PLAT_STUB(soc_printf, 385)
+PLAT_STUB(soc_set_usb_sleep, 386)
+PLAT_STUB(soc_uart0_set_log_off, 387)
+PLAT_STUB(soc_unilog_callback, 388)
+PLAT_STUB(soc_usb_onoff, 389)
+PLAT_STUB(soc_usb_serial_output, 390)
+PLAT_STUB(soc_vsprintf, 391)
+PLAT_STUB(sprintf, 392)
+PLAT_STUB(sqrt, 393)
+PLAT_STUB(srand, 394)
+PLAT_STUB(sscanf, 395)
+PLAT_STUB(strcat, 396)
+PLAT_STUB(strchr, 397)
+PLAT_STUB(strcmp, 398)
+PLAT_STUB(strcpy, 399)
+PLAT_STUB(strcspn, 400)
+PLAT_STUB(strdup, 401)
+PLAT_STUB(strerror, 402)
+PLAT_STUB(strlen, 403)
+PLAT_STUB(strncat, 404)
+PLAT_STUB(strncmp, 405)
+PLAT_STUB(strncpy, 406)
+PLAT_STUB(strnlen, 407)
+PLAT_STUB(strspn, 408)
+PLAT_STUB(strstr, 409)
+PLAT_STUB(strtod, 410)
+PLAT_STUB(strtoul, 411)
+PLAT_STUB(tan, 412)
+PLAT_STUB(tanh, 413)
+PLAT_STUB(tcp_accept, 414)
+PLAT_STUB(tcp_arg, 415)
+PLAT_STUB(tcp_bind, 416)
+PLAT_STUB(tcp_close, 417)
+PLAT_STUB(tcp_connect, 418)
+PLAT_STUB(tcp_err, 419)
+PLAT_STUB(tcp_listen_with_backlog, 420)
+PLAT_STUB(tcp_new, 421)
+PLAT_STUB(tcp_output, 422)
+PLAT_STUB(tcp_recv, 423)
+PLAT_STUB(tcp_recved, 424)
+PLAT_STUB(tcp_sent, 425)
+PLAT_STUB(tcp_shutdown, 426)
+PLAT_STUB(tcp_write, 427)
+PLAT_STUB(tcpip_callback_with_block, 428)
+PLAT_STUB(trunc, 429)
+PLAT_STUB(tzset, 430)
+PLAT_STUB(udp_bind, 431)
+PLAT_STUB(udp_connect, 432)
+PLAT_STUB(udp_new, 433)
+PLAT_STUB(udp_recv, 434)
+PLAT_STUB(udp_remove, 435)
+PLAT_STUB(udp_send, 436)
+PLAT_STUB(udp_sendto, 437)
+PLAT_STUB(vPortGetHeapStats, 438)
+PLAT_STUB(vPortGetHeapTag, 439)
+PLAT_STUB(vPortIterateAllocations, 440)
+PLAT_STUB(vPortSetHeapTag, 441)
+PLAT_STUB(vQueueDelete, 442)
+PLAT_STUB(vTaskDelete, 443)
+PLAT_STUB(vfprintf, 444)
+PLAT_STUB(vsnprintf, 445)
+PLAT_STUB(xQueueCreateMutex, 446)
+PLAT_STUB(xQueueGenericCreate, 447)
+PLAT_STUB(xQueueGenericReceive, 448)
+PLAT_STUB(xQueueGenericSend, 449)
+PLAT_STUB(xQueueGenericSendFromISR, 450)
+PLAT_STUB(xQueueGetMutexHolder, 451)
+PLAT_STUB(xTaskCreate, 452)
+PLAT_STUB(xTaskGenericNotify, 453)
+PLAT_STUB(xTaskGetCurrentTaskHandle, 454)
+PLAT_STUB(xTaskNotifyWait, 455)
