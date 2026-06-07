@@ -367,7 +367,15 @@ SECTIONS
     *(.glue_7t)
     *(.vfpll_veneer)
     *(.v4_bx)
-    *(.init*)
+    /* The bare glob `.init*` matches `.init_array` too, so it would STEAL the
+     * VM archives' .init_array from the slot's KEEP below — leaving the slot's
+     * __vm_init_array empty and the VM's static constructors unrun (their
+     * .init_array pointers also bake VM-slot addresses into this fixed,
+     * never-relocated region). Exclude the VM archives here (as for .text/.rodata
+     * above) so their .init_array falls through to the .vm_a KEEP and is captured
+     * INTO the slot, where run_static_initializers() runs it and the SRL1
+     * relocation moves the pointers with the slot. */
+    EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(.init*)
     *(.fini*)
     *(.iplt)
     *(.igot.plt)
