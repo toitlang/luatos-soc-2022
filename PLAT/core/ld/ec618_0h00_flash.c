@@ -272,7 +272,28 @@ SECTIONS
     . = ALIGN(4);
     Load$$LOAD_DRAM_SHARED$$Base = LOADADDR(.load_dram_shared);
     Image$$LOAD_DRAM_SHARED$$Base = .;
-    *(.data*)
+    /* PLAT/SDK writable .data: stays in the base image. It is live before the
+     * VM boots (PLAT startup loads it and PLAT code mutates it), so it is NEVER
+     * carried per-slot or overwritten by the slot copy below. */
+    EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(.data*)
+    /* VM (+mbedtls) writable .data — the per-slot data region of the OTA
+     * contract. Bracketed by __vm_data_start/__vm_data_end and grouped
+     * contiguously so each firmware can carry its OWN .data init image inside its
+     * slot: tools/ec618/gen-slot-reloc.toit extracts THIS range from the base LMA
+     * and appends it to the slot; the device copies the ACTIVE slot's copy back
+     * here at boot (toit_ec618.cc) before relocate_data_slot_pointers() fixes the
+     * slot pointers. The LMA stays in the base region (no slot placement, no
+     * gap-bloat) — only the *source* of the boot-time copy moves into the slot.
+     * The {RAM base, length} of this range is part of the frozen base/VM ABI:
+     * see docs/ota-contract.md. */
+    . = ALIGN(4);
+    __vm_data_start = .;
+    *libtoit_vm.a:*(.data*)
+    *libmbedtls.a:*(.data*)
+    *libmbedx509.a:*(.data*)
+    *libmbedcrypto.a:*(.data*)
+    . = ALIGN(4);
+    __vm_data_end = .;
     /* C++ static initializers — PLAT-side only here. VM constructors are
      * captured into the active slot and run by run_static_initializers()
      * in src/toit_ec618.cc against __vm_init_array_start/__vm_init_array_end. */
@@ -448,11 +469,12 @@ SECTIONS
     *plat_jt.o(.text*)
     /* VM-side C++ static initializers live inside the slot so each slot
      * is self-contained. run_static_initializers() in src/toit_ec618.cc
-     * iterates __vm_init_array_*. Writable VM .data still lives in
-     * .load_dram_shared (PLAT loads it from flash to RAM at startup);
-     * .data values are slot-agnostic for the current VM where const
-     * tables are in .rodata and writable globals don't bake in
-     * slot-specific pointers. */
+     * iterates __vm_init_array_*. The VM's writable .data is bracketed
+     * separately in .load_dram_shared (__vm_data_start/_end) and carried
+     * PER-SLOT: its values are NOT slot-agnostic (the interpreter
+     * dispatch_table and *_primitives_ hold in-slot pointers, and the
+     * content differs between firmware builds), so each slot ships its own
+     * .data init image and the device loads the active slot's copy at boot. */
     . = ALIGN(4);
     __vm_init_array_start = .;
     KEEP(*libtoit_vm.a:*(SORT(.init_array.*)))
