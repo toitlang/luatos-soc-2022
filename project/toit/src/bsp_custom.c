@@ -93,7 +93,19 @@ int _write(int file, char *ptr, int len) {
 #endif  // CONFIG_TOIT_EC618_PRINT_UART
 
 void BSP_CustomInit(void) {
+#if CONFIG_TOIT_EC618_VM_WATCHDOG
+    // Keep the always-on (AON) hardware watchdog running as a VM-liveness
+    // guard instead of stopping it: the Toit scheduler feeds it every loop
+    // iteration (OS::feed_watchdog), so a wedged VM resets the device (~27s).
+    // The deep-sleep path stops it before hibernating (toit_ec618.cc). Feed it
+    // once here to refresh the ~27s window from early boot, covering the time
+    // until the scheduler starts feeding.
+    slpManAonWdtFeed();
+#else
+    // VM-liveness guard disabled: stop the AON watchdog so it does not reboot
+    // the device (~27s) when nothing feeds it.
     slpManAonWdtStop();
+#endif
 
 #if CONFIG_TOIT_EC618_DISABLE_UNILOG
     // Silence the PLAT debug log stream. soc_uart0_set_log_off(1) detaches
