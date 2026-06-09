@@ -94,16 +94,16 @@ int _write(int file, char *ptr, int len) {
 
 void BSP_CustomInit(void) {
 #if CONFIG_TOIT_EC618_VM_WATCHDOG
-    // Keep the always-on (AON) hardware watchdog running as a VM-liveness
-    // guard instead of stopping it: the Toit scheduler feeds it every loop
-    // iteration (OS::feed_watchdog), so a wedged VM resets the device (~27s).
-    // The deep-sleep path stops it before hibernating (toit_ec618.cc). Feed it
-    // once here to refresh the ~27s window from early boot, covering the time
-    // until the scheduler starts feeding.
+    // Leave the always-on (AON) watchdog running: it is the platform's
+    // whole-chip liveness guard, armed by the boot ROM (~27s) and auto-fed by
+    // the CP core whenever a healthy CP runs. Feed it once here to refresh
+    // the window from early boot, covering the time until the CP is up.
+    // The deep-sleep path stops it before hibernating (toit_ec618.cc), where
+    // the CP stops feeding.
     slpManAonWdtFeed();
 #else
-    // VM-liveness guard disabled: stop the AON watchdog so it does not reboot
-    // the device (~27s) when nothing feeds it.
+    // CP-less debugging (bring-up, missing/mismatched CP image): nothing
+    // would feed the AON, so stop it before it reboots the device (~27s).
     slpManAonWdtStop();
 #endif
 
