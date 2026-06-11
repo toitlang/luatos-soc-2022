@@ -397,10 +397,12 @@ target(USER_PROJECT_NAME..".elf")
         add_files(SDK_TOP .. "/thirdparty/printf/*.c",{public = true})
         add_files(SDK_TOP .. "/thirdparty/littlefs/**.c",{public = true})
         add_files(SDK_TOP .. "/interface/src/*.c",{public = true})
-        -- cmpctmalloc heap replaces heap_6 from libfreertos.a.
-        add_includedirs(SDK_TOP .. "/PLAT/os/freertos/portable/mem/cmpctmalloc",{public = true})
-        add_files(SDK_TOP .. "/PLAT/os/freertos/portable/mem/cmpctmalloc/cmpctmalloc.c",{public = true})
-        add_files(SDK_TOP .. "/PLAT/os/freertos/src/heap_7.c",{public = true})
+        -- cmpctmalloc heap replaces heap_6 from libfreertos.a. Lives in the
+        -- Toit project tree (USER_PROJECT_DIR), not the SDK: it is a Toit
+        -- addition, not an SDK patch.
+        add_includedirs(USER_PROJECT_DIR .. "/src/cmpctmalloc",{public = true})
+        add_files(USER_PROJECT_DIR .. "/src/cmpctmalloc/cmpctmalloc.c",{public = true})
+        add_files(USER_PROJECT_DIR .. "/src/heap_7.c",{public = true})
         -- bsp_custom.c overrides the default BSP_CustomInit from libcore_airm2m.a.
         add_files(USER_PROJECT_DIR .. "/src/bsp_custom.c",{public = true})
         -- sys_ro_override.c overrides sysROSpaceCheck from libstartup.a, and
