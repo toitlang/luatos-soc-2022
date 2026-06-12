@@ -710,11 +710,38 @@ PLAT_PA_RAMCODE static void USART_DmaUpdateRxConfig(USART_RESOURCES *usart, uint
 {
     uint32_t firstDescriptorLen = MIN(num, UART_DMA_BURST_SIZE);
 
+    // TOIT PATCH: never program a ZERO-length descriptor. The DMA engine
+    // treats length 0 as a huge transfer and streams RX past the target
+    // buffer (heap corruption under full-duplex flood; this fires whenever
+    // an rx-timeout reload happens with <= UART_DMA_BURST_SIZE bytes left
+    // in the user buffer, and on the num==0 RECV_COMPLETE prep).
+    if (num == 0)
+    {
+        // The caller loads descriptor[0] next: make it behave exactly like
+        // the rxfifo catcher descriptor[2]. (Explicit word copies -- this
+        // is RAMCODE; keep memcpy out of it.)
+        usart->dma_rx->descriptor[0].DAR  = usart->dma_rx->descriptor[2].DAR;
+        usart->dma_rx->descriptor[0].SAR  = usart->dma_rx->descriptor[2].SAR;
+        usart->dma_rx->descriptor[0].TAR  = usart->dma_rx->descriptor[2].TAR;
+        usart->dma_rx->descriptor[0].CMDR = usart->dma_rx->descriptor[2].CMDR;
+        return;
+    }
+
     usart->dma_rx->descriptor[0].TAR = targetAddress;
     usart->dma_rx->descriptor[0].CMDR = DMA_setDescriptorTransferLen(usart->dma_rx->descriptor[1].CMDR, firstDescriptorLen);
 
-    usart->dma_rx->descriptor[1].TAR = usart->dma_rx->descriptor[0].TAR + firstDescriptorLen;
-    usart->dma_rx->descriptor[1].CMDR = DMA_setDescriptorTransferLen(usart->dma_rx->descriptor[1].CMDR, num - firstDescriptorLen);
+    if (num <= UART_DMA_BURST_SIZE)
+    {
+        // descriptor[1] would be zero length: chain descriptor[0] straight
+        // to the rxfifo catcher instead.
+        usart->dma_rx->descriptor[0].DAR = (uint32_t)&usart->dma_rx->descriptor[2];
+    }
+    else
+    {
+        usart->dma_rx->descriptor[0].DAR = (uint32_t)&usart->dma_rx->descriptor[1];
+        usart->dma_rx->descriptor[1].TAR = usart->dma_rx->descriptor[0].TAR + firstDescriptorLen;
+        usart->dma_rx->descriptor[1].CMDR = DMA_setDescriptorTransferLen(usart->dma_rx->descriptor[1].CMDR, num - firstDescriptorLen);
+    }
 }
 
 int32_t USART_Initialize(ARM_USART_SignalEvent_t cb_event, USART_RESOURCES *usart)
