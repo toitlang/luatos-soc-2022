@@ -173,7 +173,7 @@ add_ldflags(" -Wl,--wrap=time ",{force = true})
 add_ldflags(" -Wl,--wrap=SetUnilogUart", {force=true})
 
 add_ldflags("--specs=nano.specs", {force=true})
-add_asflags("-Wl,--cref -Wl,--check-sections -Wl,--gc-sections -lm -Wl,--print-memory-usage -Wl,--wrap=_malloc_r -Wl,--wrap=_free_r -Wl,--wrap=_realloc_r  -mcpu=cortex-m3 -mthumb -DTRACE_LEVEL=5 -DSOFTPACK_VERSION=\"\" -DHAVE_STRUCT_TIMESPEC")
+add_asflags("-Wl,--cref -Wl,--check-sections -Wl,--gc-sections -lm -Wl,--print-memory-usage -Wl,--wrap=_malloc_r -Wl,--wrap=_free_r -Wl,--wrap=_realloc_r -Wl,--wrap=_memalign_r -mcpu=cortex-m3 -mthumb -DTRACE_LEVEL=5 -DSOFTPACK_VERSION=\"\" -DHAVE_STRUCT_TIMESPEC")
 
 add_defines("sprintf=sprintf_")
 add_defines("snprintf=snprintf_")
@@ -295,7 +295,7 @@ local LD_BASE_FLAGS = "-Wl,--cref -Wl,--check-sections -Wl,--gc-sections -lm -Wl
 LD_BASE_FLAGS = LD_BASE_FLAGS .. " -L" .. SDK_TOP .. "/PLAT/device/target/board/ec618_0h00/ap/gcc/"
 --LD_BASE_FLAGS = LD_BASE_FLAGS .. " -T" .. SDK_TOP .. "/PLAT/device/target/board/ec618_0h00/ap/gcc/ec618_0h00_flash.ld -Wl,-Map,$(buildir)/"..USER_PROJECT_NAME.."/"..USER_PROJECT_NAME.."_$(mode).map "
 LD_BASE_FLAGS = LD_BASE_FLAGS .. " -T" .. SDK_TOP .. "/PLAT/core/ld/ec618_0h00_flash.ld -Wl,-Map,$(buildir)/"..USER_PROJECT_NAME.."/"..USER_PROJECT_NAME.."_$(mode).map "
-LD_BASE_FLAGS = LD_BASE_FLAGS .. " -Wl,--wrap=_malloc_r -Wl,--wrap=_free_r -Wl,--wrap=_realloc_r  -mcpu=cortex-m3 -mthumb -DTRACE_LEVEL=5 -DSOFTPACK_VERSION=\"\" -DHAVE_STRUCT_TIMESPEC"
+LD_BASE_FLAGS = LD_BASE_FLAGS .. " -Wl,--wrap=_malloc_r -Wl,--wrap=_free_r -Wl,--wrap=_realloc_r -Wl,--wrap=_memalign_r -mcpu=cortex-m3 -mthumb -DTRACE_LEVEL=5 -DSOFTPACK_VERSION=\"\" -DHAVE_STRUCT_TIMESPEC"
 local LIB_BASE = SDK_TOP .. "/PLAT/libs/libstartup.a "
 LIB_BASE = LIB_BASE .. SDK_TOP .. "/PLAT/libs/libcore_airm2m.a "
 LIB_BASE = LIB_BASE .. SDK_TOP .. "/PLAT/libs/libfreertos.a "
@@ -375,7 +375,7 @@ target(USER_PROJECT_NAME..".elf")
 	-- 	LD_BASE_FLAGS = " --specs=nano.specs " .. LD_BASE_FLAGS
 	-- end
 
-    if USER_PROJECT_NAME ~= 'luatos' then
+    if USER_PROJECT_NAME ~= 'luatos' and USER_PROJECT_NAME ~= 'toit' then
         add_files(SDK_TOP .. "/interface/private_src/*.c",{public = true})
         add_files(SDK_TOP .. "/thirdparty/mbedtls/library/*.c",{public = true})
         add_files(SDK_TOP .. "/thirdparty/printf/*.c",{public = true})
@@ -383,6 +383,32 @@ target(USER_PROJECT_NAME..".elf")
         add_files(SDK_TOP.."/thirdparty/flashdb/src/*.c",{public = true})
 		add_files(SDK_TOP .. "/interface/src/*.c",{public = true})
 		add_files(SDK_TOP .. "/thirdparty/littlefs/**.c",{public = true})
+    elseif USER_PROJECT_NAME == 'toit' then
+        -- Toit brings its own mbedTLS (from the esp-idf copy with Toit patches).
+        -- Still need printf, littlefs, and interface sources.
+        add_files(SDK_TOP .. "/interface/private_src/*.c",{public = true})
+        add_files(SDK_TOP .. "/thirdparty/printf/*.c",{public = true})
+        add_files(SDK_TOP .. "/thirdparty/littlefs/**.c",{public = true})
+        add_files(SDK_TOP .. "/interface/src/*.c",{public = true})
+        -- cmpctmalloc heap replaces heap_6 from libfreertos.a. Lives in the
+        -- Toit project tree (USER_PROJECT_DIR), not the SDK: it is a Toit
+        -- addition, not an SDK patch.
+        add_includedirs(USER_PROJECT_DIR .. "/src/cmpctmalloc",{public = true})
+        add_files(USER_PROJECT_DIR .. "/src/cmpctmalloc/cmpctmalloc.c",{public = true})
+        add_files(USER_PROJECT_DIR .. "/src/heap_7.c",{public = true})
+        -- bsp_custom.c overrides the default BSP_CustomInit from libcore_airm2m.a.
+        add_files(USER_PROJECT_DIR .. "/src/bsp_custom.c",{public = true})
+        -- sys_ro_override.c overrides sysROSpaceCheck from libstartup.a, and
+        -- exports the toit_ap_image_modify_{start,end} window the OTA commit
+        -- step uses to write into the AP image area.
+        add_files(USER_PROJECT_DIR .. "/src/sys_ro_override.c",{public = true})
+        add_ldflags("-Wl,--allow-multiple-definition", {force = true})
+        -- Dual-slot OTA: retain input relocations in toit.elf so
+        -- tools/ec618/gen-slot-reloc.toit can extract the slot's
+        -- relocation table (R_ARM_ABS32 data pointers + the __wrap_time
+        -- branch) for relocate-on-write. objcopy -O binary drops the
+        -- relocation sections, so ap.bin is unaffected.
+        add_ldflags("-Wl,--emit-relocs", {force = true})
     else
         remove_files(SDK_TOP .. "/interface/src/luat_kv_ec618.c")
     end
@@ -433,6 +459,11 @@ target(USER_PROJECT_NAME..".elf")
         end
         if USER_PROJECT_NAME == "luatos" then
             FLAGS = FLAGS .. " -D__LUATOS__ -DFLASH_AREA_SIZE=" .. string.format("%dK", 2944 - LUAT_SCRIPT_SIZE - LUAT_SCRIPT_OTA_SIZE)
+        end
+        -- Toit dual-slot OTA: TOIT_VM_SLOT_B=1 produces the slot-B link
+        -- pass that places the VM at .vm_b instead of .vm_a.
+        if os.getenv("TOIT_VM_SLOT_B") == "1" then
+            FLAGS = FLAGS .. " -DTOIT_VM_SLOT_B"
         end
         os.exec(GCC_DIR .. "bin/arm-none-eabi-gcc -E " .. FLAGS .. " -I " .. SDK_PATH .. "/PLAT/device/target/board/ec618_0h00/common/inc" .. " -P " .. SDK_PATH .. "/PLAT/core/ld/ec618_0h00_flash.c" ..  " -o " .. SDK_PATH .. "/PLAT/core/ld/ec618_0h00_flash.ld")
         
