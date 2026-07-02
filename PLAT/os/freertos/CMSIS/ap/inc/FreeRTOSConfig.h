@@ -190,6 +190,11 @@
 #define xPortPendSVHandler                    PendSV_Handler
 #define vPortSVCHandler                       SVC_Handler
 
+// Note: Do NOT set configNUM_THREAD_LOCAL_STORAGE_POINTERS here.
+// It would change the TCB struct layout, breaking ABI compatibility
+// with the prebuilt libfreertos.a. Toit uses its own task-to-thread
+// map instead.
+
 /* Include debug event definitions */
 //#include "freertos_evr.h"
 
