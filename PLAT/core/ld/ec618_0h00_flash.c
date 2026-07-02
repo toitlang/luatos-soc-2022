@@ -146,6 +146,12 @@ SECTIONS
   {
     . = ALIGN(4);
     *(.toit.rtc.noinit)
+    /* The SLOT's RTC-noinit region starts here (frozen-base phase 4): the
+     * slot links place their .toit.rtc.noinit at this exported address, so
+     * the region is FIXED across slot builds — RTC content must survive a
+     * slot OTA. Part of the base geometry contract. */
+    . = ALIGN(8);
+    __toit_rtc_slot = .;
     . = ALIGN(4);
   } >ASMB_AREA
 
