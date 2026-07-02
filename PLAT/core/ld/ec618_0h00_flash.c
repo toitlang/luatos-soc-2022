@@ -1,6 +1,16 @@
 
 #include "mem_map.h"
 
+/* Fixed-size pooled reservation for the VM's contribution to shared RAM
+ * (the .vm_dram_data / .vm_dram_zi sections in the dram map). The heap
+ * start (end_ap_data) is pinned at the reserve's END, so VM .data/.bss
+ * growth within the reserve is INVISIBLE to the base — the structural half
+ * of the frozen-base contract (docs/frozen-base-design.md phase 3). Actual
+ * use (2026-07: data ~0x2D4, zi ~0x1300) is ASSERTed against the pool;
+ * growing the reserve is a BASE change (full flash). */
+#define TOIT_VM_DATA_RESERVE 0x00002000
+#define TOIT_VM_ZI_RESERVE   0x00004000
+
 /* Entry Point */
 ENTRY(Reset_Handler)
 
@@ -276,24 +286,8 @@ SECTIONS
      * VM boots (PLAT startup loads it and PLAT code mutates it), so it is NEVER
      * carried per-slot or overwritten by the slot copy below. */
     EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(.data*)
-    /* VM (+mbedtls) writable .data — the per-slot data region of the OTA
-     * contract. Bracketed by __vm_data_start/__vm_data_end and grouped
-     * contiguously so each firmware can carry its OWN .data init image inside its
-     * slot: tools/ec618/gen-slot-reloc.toit extracts THIS range from the base LMA
-     * and appends it to the slot; the device copies the ACTIVE slot's copy back
-     * here at boot (toit_ec618.cc) before relocate_data_slot_pointers() fixes the
-     * slot pointers. The LMA stays in the base region (no slot placement, no
-     * gap-bloat) — only the *source* of the boot-time copy moves into the slot.
-     * The {RAM base, length} of this range is part of the frozen base/VM ABI:
-     * see docs/ota-contract.md. */
-    . = ALIGN(4);
-    __vm_data_start = .;
-    *libtoit_vm.a:*(.data*)
-    *libmbedtls.a:*(.data*)
-    *libmbedx509.a:*(.data*)
-    *libmbedcrypto.a:*(.data*)
-    . = ALIGN(4);
-    __vm_data_end = .;
+    /* The VM's writable .data lives in its own reserved section .vm_dram_data
+     * BELOW, so its size never moves PLAT symbols or the heap start. */
     /* C++ static initializers — PLAT-side only here. VM constructors are
      * captured into the active slot and run by run_static_initializers()
      * in src/toit_ec618.cc against __vm_init_array_start/__vm_init_array_end. */
@@ -312,8 +306,9 @@ SECTIONS
     . = ALIGN(4);
     Image$$LOAD_DRAM_SHARED$$ZI$$Base = .;
     *(.platBlSctZIData)
-    *(.bss*)
-    *(COMMON)
+    /* VM .bss/COMMON live in the reserved .vm_dram_zi section below. */
+    EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(.bss*)
+    EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(COMMON)
     . = ALIGN(4);
     *(.stack)               /* stack should be 4 byte align */
     Image$$LOAD_DRAM_SHARED$$ZI$$Limit = .;
@@ -321,7 +316,61 @@ SECTIONS
   } >MSMB_AREA
 
 
-  PROVIDE(end_ap_data = . );
+  /* VM (+mbedtls) writable .data — the per-slot data region of the OTA
+   * contract. Bracketed by __vm_data_start/__vm_data_end and grouped
+   * contiguously so each firmware can carry its OWN .data init image inside
+   * its slot: tools/ec618/gen-slot-reloc.toit extracts THIS range from the
+   * base LMA and appends it to the slot; the device copies the ACTIVE slot's
+   * copy back here at boot (toit_ec618.cc) before
+   * relocate_data_slot_pointers() fixes the slot pointers. The {RAM base,
+   * reserve} is part of the frozen base/VM ABI: see docs/ota-contract.md.
+   * The section occupies only its ACTUAL size in flash; the reserve is
+   * enforced by placing .vm_dram_zi at the reserve limit. */
+  .vm_dram_data : ALIGN(4)
+  {
+    Load$$VM_DRAM_DATA$$Base = LOADADDR(.vm_dram_data);
+    Image$$VM_DRAM_DATA$$Base = .;
+    __vm_data_start = .;
+    *libtoit_vm.a:*(.data*)
+    *libmbedtls.a:*(.data*)
+    *libmbedx509.a:*(.data*)
+    *libmbedcrypto.a:*(.data*)
+    . = ALIGN(4);
+    __vm_data_end = .;
+  } >MSMB_AREA AT>FLASH_AREA
+
+  /* C-friendly alias of the section's flash LMA: the VM's boot path falls
+   * back to this base-carried init image when the slot carries no .data
+   * region (see load_active_slot_vm_data in src/toit_ec618.cc). */
+  __vm_data_load = LOADADDR(.vm_dram_data);
+
+  /* VM .bss, in the remainder of the reservation. PLAT's ZI loop does NOT
+   * cover this section: the VM zeroes it itself at entry
+   * (load_active_slot_vm_data in src/toit_ec618.cc, before anything reads
+   * a VM static). */
+  .vm_dram_zi (NOLOAD):
+  {
+    __vm_zi_start = .;
+    *libtoit_vm.a:*(.bss*)
+    *libtoit_vm.a:*(COMMON)
+    *libmbedtls.a:*(.bss*)
+    *libmbedtls.a:*(COMMON)
+    *libmbedx509.a:*(.bss*)
+    *libmbedx509.a:*(COMMON)
+    *libmbedcrypto.a:*(.bss*)
+    *libmbedcrypto.a:*(COMMON)
+    . = ALIGN(4);
+    __vm_zi_end = .;
+  } >MSMB_AREA
+
+  /* The heap starts at the RESERVE limit, not at the VM's actual end — the
+   * whole point: VM .data/.bss growth inside the (pooled) reserve cannot
+   * move it, so the base's heap placement survives any slot OTA that fits.
+   * __vm_data_start depends only on PLAT's dram use, so it is stable for a
+   * given base; the reserve is one pooled budget for data + zi. */
+  PROVIDE(end_ap_data = __vm_data_start + TOIT_VM_DATA_RESERVE + TOIT_VM_ZI_RESERVE);
+  ASSERT(__vm_zi_end <= end_ap_data,
+         "VM .data+.bss exceeded the pooled VM dram reserve — grow it (BASE change, full flash)")
   PROVIDE(start_up_buffer = up_buf_start);
   .load_up_buffer start_up_buffer(NOLOAD):
   {
