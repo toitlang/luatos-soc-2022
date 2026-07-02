@@ -432,7 +432,12 @@ SECTIONS
 #define TOIT_VM_LINK_BASE 0x00D00000
 #define TOIT_SLOT_MARKER_ORIGIN 0x00B11000
 #define TOIT_SLOT_MARKER_SIZE   0x00002000  /* two 4 KB sectors, ping-ponged */
-#define TOIT_PLAT_TEXT_LIMIT TOIT_VM_A_ORIGIN
+/* The base-id page: gen-base-id.toit patches the { magic, version,
+ * fingerprint } record into this (otherwise unused) flash page after the
+ * base link — the device compares it against the id carried in every OTA
+ * payload (SRL3) and rejects mismatched slots. PLAT text must stay out. */
+#define TOIT_BASE_ID_ORIGIN 0x00990000
+#define TOIT_PLAT_TEXT_LIMIT TOIT_BASE_ID_ORIGIN
 
   .text :
   {
