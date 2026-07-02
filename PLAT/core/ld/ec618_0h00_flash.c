@@ -430,6 +430,11 @@ SECTIONS
 
   .text :
   {
+    /* The PLAT keep-list (plat_keep.c): nothing references the address
+     * table, so --gc-sections would drop it and, with it, the generous
+     * PLAT API surface the frozen base guarantees to future slots
+     * (__attribute__((used)) does NOT survive section GC). */
+    KEEP(*(.rodata.toit_plat_keep))
     EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(.rodata*)
     EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(.text*)
     *(.glue_7)
