@@ -340,8 +340,7 @@ SECTIONS
    * the FOTA copy-back was deleted). The LittleFS (0xB84000) and FDB / flash
    * registry (0xBCC000, used by Toit) above stay untouched.
    *
-   *   0x848000-0x990000 : PLAT .text  (~1.27 MB used, ~50 KB headroom)
-   *   0x990000-0x991000 : .jt_data    (4 KB, fixed addr for jump table; lives inside PLAT objects)
+   *   0x848000-0x991000 : PLAT .text  (~1.27 MB used, ~50 KB headroom)
    *   0x991000-0xA51000 : .vm_a       (768 KB, slot A)
    *   0xA51000-0xB11000 : .vm_b       (768 KB, slot B)
    *   0xB11000-0xB13000 : .slot_marker (8 KB, two sectors — power-fail-safe
@@ -364,26 +363,26 @@ SECTIONS
  * base from the slot flash address means BOTH slots get a non-zero relocation
  * delta, so the slot-A relocation path is exercised for real (not a same-base
  * no-op) and a missed relocation faults on slot-A boot, not only after a B->A
- * OTA. Picked a round 16 MB: above the 3 MB FLASH_AREA (ends 0xB24000) and
- * outside every mapped region (a stray un-relocated pointer faults loudly), yet
- * within +-16 MB of PLAT so the one escaping VM->PLAT branch (__wrap_time) still
- * encodes at link time. To make slot A canonical again, set this to
- * TOIT_VM_A_ORIGIN. */
-#define TOIT_VM_LINK_BASE 0x01000000
-#define TOIT_JT_ORIGIN    0x00990000
-#define TOIT_JT_SIZE      0x00001000
+ * OTA. Picked 0x00D00000: above the
+ * 3 MB FLASH_AREA (ends 0xB24000) and outside every mapped region (a stray
+ * un-relocated pointer faults loudly), yet close enough that EVERY escaping
+ * VM->PLAT branch encodes as a direct Thumb-2 BL at link time — the binding
+ * constraint is the ITCM-resident hot functions (memcpy & friends at
+ * ~0x2600): the farthest branch source (link base + slot size = 0xDC0000)
+ * is ~14.4 MB from them, inside BL's +-16.7 MB with margin. At the old
+ * 0x01000000 base those branches were ~16.8 MB out, so ld emitted in-slot
+ * long-branch veneers in the slot-A link but not the slot-B link, breaking
+ * the byte-identity contract the relocation table depends on. To make slot
+ * A canonical again, set this to TOIT_VM_A_ORIGIN. */
+#define TOIT_VM_LINK_BASE 0x00D00000
 #define TOIT_SLOT_MARKER_ORIGIN 0x00B11000
 #define TOIT_SLOT_MARKER_SIZE   0x00002000  /* two 4 KB sectors, ping-ponged */
-#define TOIT_PLAT_TEXT_LIMIT TOIT_JT_ORIGIN
+#define TOIT_PLAT_TEXT_LIMIT TOIT_VM_A_ORIGIN
 
   .text :
   {
     EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(.rodata*)
-    /* plat_jt.o's __wrap_* stubs go INTO each VM slot (below) so the VM's
-     * BL into them is a within-slot call that moves with the slot — that's
-     * what makes the slot-A and slot-B images byte-identical in the call
-     * sites (position independence). Its g_plat_jt[] stays in .jt_data. */
-    EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a *plat_jt.o) *(.text*)
+    EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(.text*)
     *(.glue_7)
     *(.glue_7t)
     *(.vfpll_veneer)
@@ -435,27 +434,6 @@ SECTIONS
   ASSERT(. <= TOIT_PLAT_TEXT_LIMIT,
          "PLAT region overflowed into VM slot A; reduce PLAT or move TOIT_VM_A_ORIGIN.")
 
-  /* Jump-table data at fixed flash address. plat_jt.o annotates the
-   * g_plat_jt[] array with __attribute__((section(".jt_data"))). The
-   * table lives here (inside the PLAT region textually, but the address
-   * is fixed so both VM_A and VM_B see g_plat_jt[] at the same XIP
-   * address regardless of which link pass produced them).
-   *
-   * Each fixed-address section uses an explicit `addr :` prefix so the
-   * linker plants it at the configured flash offset; the bare `>FLASH_AREA`
-   * form keys off FLASH_AREA's running location counter, which would
-   * stack the slots back-to-back at the end of PLAT.
-   */
-  .jt_data TOIT_JT_ORIGIN :
-  {
-    __jt_data_start = .;
-    KEEP(*(.jt_data))
-    __jt_data_end = .;
-  } >FLASH_AREA
-
-  ASSERT(__jt_data_end - __jt_data_start <= TOIT_JT_SIZE,
-         "Jump-table section .jt_data exceeded TOIT_JT_SIZE")
-
   /* Linked at the neutral TOIT_VM_LINK_BASE (VMA), loaded into slot A's flash
    * region (LMA, via AT). __vm_link_base/__vm_link_end are the link-domain (VMA)
    * markers gen-slot-reloc relocates FROM; __vm_a_start/__vm_a_end stay the slot
@@ -465,8 +443,6 @@ SECTIONS
     __vm_link_base = .;
 #ifndef TOIT_VM_SLOT_B
     KEEP(*(.vm_entry))
-    /* PLAT jump-table stubs live inside the slot (see .text comment). */
-    *plat_jt.o(.text*)
     /* VM-side C++ static initializers live inside the slot so each slot
      * is self-contained. run_static_initializers() in src/toit_ec618.cc
      * iterates __vm_init_array_*. The VM's writable .data is bracketed
@@ -513,8 +489,6 @@ SECTIONS
     __vm_b_start = .;
 #ifdef TOIT_VM_SLOT_B
     KEEP(*(.vm_entry))
-    /* PLAT jump-table stubs live inside the slot (see .text comment). */
-    *plat_jt.o(.text*)
     . = ALIGN(4);
     __vm_init_array_start = .;
     KEEP(*libtoit_vm.a:*(SORT(.init_array.*)))
