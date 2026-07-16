@@ -395,11 +395,11 @@ SECTIONS
    * the FOTA copy-back was deleted). The LittleFS (0xB84000) and FDB / flash
    * registry (0xBCC000, used by Toit) above stay untouched.
    *
-   *   0x848000-0x991000 : PLAT .text  (~1.27 MB used, ~50 KB headroom)
-   *   0x991000-0xA51000 : .vm_a       (768 KB, slot A)
-   *   0xA51000-0xB11000 : .vm_b       (768 KB, slot B)
-   *   0xB11000-0xB13000 : .slot_marker (8 KB, two sectors — power-fail-safe
-   *                                     active-slot record, ping-ponged)
+   *   0x848000-0x990000 : PLAT .text  (~1.27 MB used, ~50 KB headroom)
+   *   0x993000-0xA53000 : .vm_a       (768 KB, slot A)
+   *   0xA53000-0xB13000 : .vm_b       (768 KB, slot B)
+   *   0x991000-0x993000 : .toit_anchor (8 KB, two sectors — the power-fail-safe
+   *                                     ANCHOR record: boot state + the ACTIVE partition table)
    *   0xB13000-0xB84000 : free        (reclaimed FOTA region)
    *
    * The VM (libtoit_vm.a + mbedtls), the bundled extension (containers + config),
@@ -409,8 +409,8 @@ SECTIONS
    * the device writes (relocate-on-write OTA); the slot-B link survives only as
    * the build-time byte-identity check.
    */
-#define TOIT_VM_A_ORIGIN  0x00991000
-#define TOIT_VM_B_ORIGIN  0x00A51000
+#define TOIT_VM_A_ORIGIN  0x00993000
+#define TOIT_VM_B_ORIGIN  0x00A53000
 #define TOIT_VM_SLOT_SIZE 0x000C0000
 /* Neutral link base for the position-independent VM image. The image is LINKED
  * here (a VMA that is NEITHER slot) and RELOCATED to whichever slot it is
@@ -430,14 +430,17 @@ SECTIONS
  * the byte-identity contract the relocation table depends on. To make slot
  * A canonical again, set this to TOIT_VM_A_ORIGIN. */
 #define TOIT_VM_LINK_BASE 0x00D00000
-#define TOIT_SLOT_MARKER_ORIGIN 0x00B11000
-#define TOIT_SLOT_MARKER_SIZE   0x00002000  /* two 4 KB sectors, ping-ponged */
+#define TOIT_ANCHOR_ORIGIN 0x00991000  /* directly after the base-id page */
+#define TOIT_ANCHOR_SIZE   0x00002000  /* two 4 KB sectors, ping-ponged */
 /* The base-id page: gen-base-id.toit patches the { magic, version,
  * fingerprint } record into this (otherwise unused) flash page after the
  * base link — the device compares it against the id carried in every OTA
  * payload (SRL3) and rejects mismatched slots. PLAT text must stay out. */
 #define TOIT_BASE_ID_ORIGIN 0x00990000
 #define TOIT_PLAT_TEXT_LIMIT TOIT_BASE_ID_ORIGIN
+/* Exported so slot links (--just-symbols) locate the base-id record and
+ * the VM never compiles in the address. */
+__toit_base_id_start = TOIT_BASE_ID_ORIGIN;
 
   .text :
   {
@@ -582,21 +585,21 @@ SECTIONS
          "VM slot B overflowed TOIT_VM_SLOT_SIZE")
 #endif
 
-  .slot_marker TOIT_SLOT_MARKER_ORIGIN :
+  .toit_anchor TOIT_ANCHOR_ORIGIN :
   {
-    __slot_marker_start = .;
-    KEEP(*(.slot_marker))
+    __toit_anchor_start = .;
+    KEEP(*(.toit_anchor))
     /* Reserve both sectors so the AP binary spans the full marker region;
      * the extension (appended after the binary) therefore starts past
      * sector 1, leaving the ping-pong's second sector free to be written.
      * Fresh contents read as "no valid record" → the dispatcher boots
-     * slot A (see slot_marker_read). */
-    . = __slot_marker_start + TOIT_SLOT_MARKER_SIZE;
-    __slot_marker_end = .;
+     * slot A boot state but NO table — the device refuses to boot (anchor.c). */
+    . = __toit_anchor_start + TOIT_ANCHOR_SIZE;
+    __toit_anchor_end = .;
   } >FLASH_AREA
 
-  ASSERT(__slot_marker_end - __slot_marker_start == TOIT_SLOT_MARKER_SIZE,
-         "slot marker region must reserve exactly TOIT_SLOT_MARKER_SIZE")
+  ASSERT(__toit_anchor_end - __toit_anchor_start == TOIT_ANCHOR_SIZE,
+         "anchor region must reserve exactly TOIT_ANCHOR_SIZE")
 
   PROVIDE(totalFlashLimit = .);
 
