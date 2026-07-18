@@ -26,9 +26,9 @@ MEMORY
   FLASH_AREA(rx)              : ORIGIN = 0x00824000, LENGTH = 2212K         /* 2212K */
 #endif
 #else
-  /* Toit: 3072K reaches the 768 KB slot B + marker (ends 0xB13000), reclaiming
-   * the dead FOTA region; stays below LittleFS (0xB84000) and the FDB. */
-  FLASH_AREA(rx)              : ORIGIN = 0x00824000, LENGTH = 3072K         /* 3072K */
+  /* Toit: reaches the end of slot B plus one free sector (0xB34000).
+   * The registry starts immediately above and is never linked into AP. */
+  FLASH_AREA(rx)              : ORIGIN = 0x00824000, LENGTH = 3136K         /* 3136K */
 #endif
 }
 
@@ -390,17 +390,18 @@ SECTIONS
   ASSERT(end_up_buffer<=MSMB_APMEM_END_ADDR,"ap use too much ram, exceed to MSMB_APMEM_END_ADDR")
 
   /*
-   * Dual-slot OTA layout (Toit fork). Each VM slot is 768 KB, reclaiming the
-   * dead LuatOS FOTA region (0xB04000-0xB84000, unused by Toit and removed when
-   * the FOTA copy-back was deleted). The LittleFS (0xB84000) and FDB / flash
-   * registry (0xBCC000, used by Toit) above stay untouched.
+   * Dual-slot OTA layout (Toit fork). Frozen regions come first: the PLAT
+   * base, its base-id page, then the SDK's 128 KB LittleFS. The anchor is the
+   * fixed boundary after them; mutable A/B slots and the registry follow.
    *
    *   0x848000-0x990000 : PLAT .text  (~1.27 MB used, ~50 KB headroom)
-   *   0x993000-0xA53000 : .vm_a       (768 KB, slot A)
-   *   0xA53000-0xB13000 : .vm_b       (768 KB, slot B)
-   *   0x991000-0x993000 : .toit_anchor (8 KB, two sectors — the power-fail-safe
+   *   0x991000-0x9B1000 : LittleFS    (128 KB, SDK OSA configuration)
+   *   0x9B3000-0xA73000 : .vm_a       (768 KB, slot A)
+   *   0xA73000-0xB33000 : .vm_b       (768 KB, slot B)
+   *   0x9B1000-0x9B3000 : .toit_anchor (8 KB, two sectors — the power-fail-safe
    *                                     ANCHOR record: boot state + the ACTIVE partition table)
-   *   0xB13000-0xB84000 : free        (reclaimed FOTA region)
+   *   0xB33000-0xB34000 : free        (one layout-shift sector)
+   *   0xB34000-0xBDC000 : registry    (672 KB; old 64 KB is its upper subset)
    *
    * The VM (libtoit_vm.a + mbedtls), the bundled extension (containers + config),
    * and the .vm_entry pointer are linked once at .vm_a (or .vm_b for the slot-B
@@ -409,8 +410,8 @@ SECTIONS
    * the device writes (relocate-on-write OTA); the slot-B link survives only as
    * the build-time byte-identity check.
    */
-#define TOIT_VM_A_ORIGIN  0x00993000
-#define TOIT_VM_B_ORIGIN  0x00A53000
+#define TOIT_VM_A_ORIGIN  0x009B3000
+#define TOIT_VM_B_ORIGIN  0x00A73000
 #define TOIT_VM_SLOT_SIZE 0x000C0000
 /* Neutral link base for the position-independent VM image. The image is LINKED
  * here (a VMA that is NEITHER slot) and RELOCATED to whichever slot it is
@@ -419,7 +420,7 @@ SECTIONS
  * delta, so the slot-A relocation path is exercised for real (not a same-base
  * no-op) and a missed relocation faults on slot-A boot, not only after a B->A
  * OTA. Picked 0x00D00000: above the
- * 3 MB FLASH_AREA (ends 0xB24000) and outside every mapped region (a stray
+ * AP FLASH_AREA (ends 0xB34000) and outside every mapped region (a stray
  * un-relocated pointer faults loudly), yet close enough that EVERY escaping
  * VM->PLAT branch encodes as a direct Thumb-2 BL at link time — the binding
  * constraint is the ITCM-resident hot functions (memcpy & friends at
@@ -430,7 +431,7 @@ SECTIONS
  * the byte-identity contract the relocation table depends on. To make slot
  * A canonical again, set this to TOIT_VM_A_ORIGIN. */
 #define TOIT_VM_LINK_BASE 0x00D00000
-#define TOIT_ANCHOR_ORIGIN 0x00991000  /* directly after the base-id page */
+#define TOIT_ANCHOR_ORIGIN 0x009B1000  /* directly after the frozen LittleFS */
 #define TOIT_ANCHOR_SIZE   0x00002000  /* two 4 KB sectors, ping-ponged */
 /* The base-id page: gen-base-id.toit patches the { magic, version,
  * fingerprint } record into this (otherwise unused) flash page after the
