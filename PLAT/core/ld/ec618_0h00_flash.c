@@ -1,6 +1,16 @@
 
 #include "mem_map.h"
 
+/* Fixed-size pooled reservation for the VM's contribution to shared RAM
+ * (the .vm_dram_data / .vm_dram_zi sections in the dram map). The heap
+ * start (end_ap_data) is pinned at the reserve's END, so VM .data/.bss
+ * growth within the reserve is INVISIBLE to the base — the structural half
+ * of the frozen-base contract (docs/frozen-base-design.md phase 3). Actual
+ * use (2026-07: data ~0x2D4, zi ~0x1300) is ASSERTed against the pool;
+ * growing the reserve is a BASE change (full flash). */
+#define TOIT_VM_DATA_RESERVE 0x00002000
+#define TOIT_VM_ZI_RESERVE   0x00004000
+
 /* Entry Point */
 ENTRY(Reset_Handler)
 
@@ -16,7 +26,9 @@ MEMORY
   FLASH_AREA(rx)              : ORIGIN = 0x00824000, LENGTH = 2212K         /* 2212K */
 #endif
 #else
-  FLASH_AREA(rx)              : ORIGIN = 0x00824000, LENGTH = 2944K         /* 2944K */
+  /* Toit: reaches the end of slot B plus one free sector (0xB34000).
+   * The registry starts immediately above and is never linked into AP. */
+  FLASH_AREA(rx)              : ORIGIN = 0x00824000, LENGTH = 3136K         /* 3136K */
 #endif
 }
 
@@ -126,11 +138,28 @@ SECTIONS
    *(.exceptCheck)
   } >ASMB_AREA
 
+  /* Toit RTC memory: placed after the ZI limit markers in ASMB.
+     NOTE: On EC618, ASMB content does NOT survive SLP2 or HIBERNATE
+     despite being in a (NOLOAD) section. The SLP2 save/restore
+     mechanism corrupts this region. RTC persistence requires flash. */
+  .toit_rtc_noinit (NOLOAD):
+  {
+    . = ALIGN(4);
+    *(.toit.rtc.noinit)
+    /* The SLOT's RTC-noinit region starts here (frozen-base phase 4): the
+     * slot links place their .toit.rtc.noinit at this exported address, so
+     * the region is FIXED across slot builds — RTC content must survive a
+     * slot OTA. Part of the base geometry contract. */
+    . = ALIGN(8);
+    __toit_rtc_slot = .;
+    . = ALIGN(4);
+  } >ASMB_AREA
+
   .unload_cpaon CP_AONMEMBACKUP_START_ADDR (NOLOAD):
   {
 
   } >ASMB_AREA
-  
+
   .load_rrcmem 0xB000 (NOLOAD):
   {
     *(.rrcMem)
@@ -259,7 +288,20 @@ SECTIONS
     . = ALIGN(4);
     Load$$LOAD_DRAM_SHARED$$Base = LOADADDR(.load_dram_shared);
     Image$$LOAD_DRAM_SHARED$$Base = .;
-    *(.data*)
+    /* PLAT/SDK writable .data: stays in the base image. It is live before the
+     * VM boots (PLAT startup loads it and PLAT code mutates it), so it is NEVER
+     * carried per-slot or overwritten by the slot copy below. */
+    EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(.data*)
+    /* The VM's writable .data lives in its own reserved section .vm_dram_data
+     * BELOW, so its size never moves PLAT symbols or the heap start. */
+    /* C++ static initializers — PLAT-side only here. VM constructors are
+     * captured into the active slot and run by run_static_initializers()
+     * in src/toit_ec618.cc against __vm_init_array_start/__vm_init_array_end. */
+    . = ALIGN(4);
+    __init_array_start = .;
+    KEEP (EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(SORT(.init_array.*)))
+    KEEP (EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(.init_array*))
+    __init_array_end = .;
     . = ALIGN(4);
   } >MSMB_AREA AT>FLASH_AREA
 
@@ -270,8 +312,9 @@ SECTIONS
     . = ALIGN(4);
     Image$$LOAD_DRAM_SHARED$$ZI$$Base = .;
     *(.platBlSctZIData)
-    *(.bss*)
-    *(COMMON)
+    /* VM .bss/COMMON live in the reserved .vm_dram_zi section below. */
+    EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(.bss*)
+    EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(COMMON)
     . = ALIGN(4);
     *(.stack)               /* stack should be 4 byte align */
     Image$$LOAD_DRAM_SHARED$$ZI$$Limit = .;
@@ -279,7 +322,61 @@ SECTIONS
   } >MSMB_AREA
 
 
-  PROVIDE(end_ap_data = . );
+  /* VM (+mbedtls) writable .data — the per-slot data region of the OTA
+   * contract. Bracketed by __vm_data_start/__vm_data_end and grouped
+   * contiguously so each firmware can carry its OWN .data init image inside
+   * its slot: tools/ec618/gen-slot-reloc.toit extracts THIS range from the
+   * base LMA and appends it to the slot; the device copies the ACTIVE slot's
+   * copy back here at boot (toit_ec618.cc) before
+   * relocate_data_slot_pointers() fixes the slot pointers. The {RAM base,
+   * reserve} is part of the frozen base/VM ABI: see docs/ota-contract.md.
+   * The section occupies only its ACTUAL size in flash; the reserve is
+   * enforced by placing .vm_dram_zi at the reserve limit. */
+  .vm_dram_data : ALIGN(4)
+  {
+    Load$$VM_DRAM_DATA$$Base = LOADADDR(.vm_dram_data);
+    Image$$VM_DRAM_DATA$$Base = .;
+    __vm_data_start = .;
+    *libtoit_vm.a:*(.data*)
+    *libmbedtls.a:*(.data*)
+    *libmbedx509.a:*(.data*)
+    *libmbedcrypto.a:*(.data*)
+    . = ALIGN(4);
+    __vm_data_end = .;
+  } >MSMB_AREA AT>FLASH_AREA
+
+  /* C-friendly alias of the section's flash LMA: the VM's boot path falls
+   * back to this base-carried init image when the slot carries no .data
+   * region (see load_active_slot_vm_data in src/toit_ec618.cc). */
+  __vm_data_load = LOADADDR(.vm_dram_data);
+
+  /* VM .bss, in the remainder of the reservation. PLAT's ZI loop does NOT
+   * cover this section: the VM zeroes it itself at entry
+   * (load_active_slot_vm_data in src/toit_ec618.cc, before anything reads
+   * a VM static). */
+  .vm_dram_zi (NOLOAD):
+  {
+    __vm_zi_start = .;
+    *libtoit_vm.a:*(.bss*)
+    *libtoit_vm.a:*(COMMON)
+    *libmbedtls.a:*(.bss*)
+    *libmbedtls.a:*(COMMON)
+    *libmbedx509.a:*(.bss*)
+    *libmbedx509.a:*(COMMON)
+    *libmbedcrypto.a:*(.bss*)
+    *libmbedcrypto.a:*(COMMON)
+    . = ALIGN(4);
+    __vm_zi_end = .;
+  } >MSMB_AREA
+
+  /* The heap starts at the RESERVE limit, not at the VM's actual end — the
+   * whole point: VM .data/.bss growth inside the (pooled) reserve cannot
+   * move it, so the base's heap placement survives any slot OTA that fits.
+   * __vm_data_start depends only on PLAT's dram use, so it is stable for a
+   * given base; the reserve is one pooled budget for data + zi. */
+  PROVIDE(end_ap_data = __vm_data_start + TOIT_VM_DATA_RESERVE + TOIT_VM_ZI_RESERVE);
+  ASSERT(__vm_zi_end <= end_ap_data,
+         "VM .data+.bss exceeded the pooled VM dram reserve — grow it (BASE change, full flash)")
   PROVIDE(start_up_buffer = up_buf_start);
   .load_up_buffer start_up_buffer(NOLOAD):
   {
@@ -292,15 +389,82 @@ SECTIONS
   ASSERT(heap_size>=min_heap_size_threshold,"ap use too much ram, heap less than min_heap_size_threshold!")
   ASSERT(end_up_buffer<=MSMB_APMEM_END_ADDR,"ap use too much ram, exceed to MSMB_APMEM_END_ADDR")
 
+  /*
+   * Dual-slot OTA layout (Toit fork). Frozen regions come first: the PLAT
+   * base, its base-id page, then the SDK's 128 KB LittleFS. The anchor is the
+   * fixed boundary after them; mutable A/B slots and the registry follow.
+   *
+   *   0x848000-0x990000 : PLAT .text  (~1.27 MB used, ~50 KB headroom)
+   *   0x991000-0x9B1000 : LittleFS    (128 KB, SDK OSA configuration)
+   *   0x9B3000-0xA73000 : .vm_a       (768 KB, slot A)
+   *   0xA73000-0xB33000 : .vm_b       (768 KB, slot B)
+   *   0x9B1000-0x9B3000 : .toit_anchor (8 KB, two sectors — the power-fail-safe
+   *                                     ANCHOR record: boot state + the ACTIVE partition table)
+   *   0xB33000-0xB34000 : free        (one layout-shift sector)
+   *   0xB34000-0xBDC000 : registry    (672 KB; old 64 KB is its upper subset)
+   *
+   * The VM (libtoit_vm.a + mbedtls), the bundled extension (containers + config),
+   * and the .vm_entry pointer are linked once at .vm_a (or .vm_b for the slot-B
+   * byte-identity oracle, -DTOIT_VM_SLOT_B). PLAT objects fall through into
+   * .text. The single position-independent image is RELOCATED to whichever slot
+   * the device writes (relocate-on-write OTA); the slot-B link survives only as
+   * the build-time byte-identity check.
+   */
+#define TOIT_VM_A_ORIGIN  0x009B3000
+#define TOIT_VM_B_ORIGIN  0x00A73000
+#define TOIT_VM_SLOT_SIZE 0x000C0000
+/* Neutral link base for the position-independent VM image. The image is LINKED
+ * here (a VMA that is NEITHER slot) and RELOCATED to whichever slot it is
+ * written to — INCLUDING slot A (LMA below = slot A via AT). Decoupling the link
+ * base from the slot flash address means BOTH slots get a non-zero relocation
+ * delta, so the slot-A relocation path is exercised for real (not a same-base
+ * no-op) and a missed relocation faults on slot-A boot, not only after a B->A
+ * OTA. Picked 0x00D00000: above the
+ * AP FLASH_AREA (ends 0xB34000) and outside every mapped region (a stray
+ * un-relocated pointer faults loudly), yet close enough that EVERY escaping
+ * VM->PLAT branch encodes as a direct Thumb-2 BL at link time — the binding
+ * constraint is the ITCM-resident hot functions (memcpy & friends at
+ * ~0x2600): the farthest branch source (link base + slot size = 0xDC0000)
+ * is ~14.4 MB from them, inside BL's +-16.7 MB with margin. At the old
+ * 0x01000000 base those branches were ~16.8 MB out, so ld emitted in-slot
+ * long-branch veneers in the slot-A link but not the slot-B link, breaking
+ * the byte-identity contract the relocation table depends on. To make slot
+ * A canonical again, set this to TOIT_VM_A_ORIGIN. */
+#define TOIT_VM_LINK_BASE 0x00D00000
+#define TOIT_ANCHOR_ORIGIN 0x009B1000  /* directly after the frozen LittleFS */
+#define TOIT_ANCHOR_SIZE   0x00002000  /* two 4 KB sectors, ping-ponged */
+/* The base-id page: gen-base-id.toit patches the { magic, version,
+ * fingerprint } record into this (otherwise unused) flash page after the
+ * base link — the device compares it against the id carried in every OTA
+ * payload (SRL3) and rejects mismatched slots. PLAT text must stay out. */
+#define TOIT_BASE_ID_ORIGIN 0x00990000
+#define TOIT_PLAT_TEXT_LIMIT TOIT_BASE_ID_ORIGIN
+/* Exported so slot links (--just-symbols) locate the base-id record and
+ * the VM never compiles in the address. */
+__toit_base_id_start = TOIT_BASE_ID_ORIGIN;
+
   .text :
   {
-    *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
-    *(.text*)
+    /* The PLAT keep-list (plat_keep.c): nothing references the address
+     * table, so --gc-sections would drop it and, with it, the generous
+     * PLAT API surface the frozen base guarantees to future slots
+     * (__attribute__((used)) does NOT survive section GC). */
+    KEEP(*(.rodata.toit_plat_keep))
+    EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(.rodata*)
+    EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(.text*)
     *(.glue_7)
     *(.glue_7t)
     *(.vfpll_veneer)
     *(.v4_bx)
-    *(.init*)
+    /* The bare glob `.init*` matches `.init_array` too, so it would STEAL the
+     * VM archives' .init_array from the slot's KEEP below — leaving the slot's
+     * __vm_init_array empty and the VM's static constructors unrun (their
+     * .init_array pointers also bake VM-slot addresses into this fixed,
+     * never-relocated region). Exclude the VM archives here (as for .text/.rodata
+     * above) so their .init_array falls through to the .vm_a KEEP and is captured
+     * INTO the slot, where run_static_initializers() runs it and the SRL1
+     * relocation moves the pointers with the slot. */
+    EXCLUDE_FILE (*libtoit_vm.a *libmbedtls.a *libmbedx509.a *libmbedcrypto.a) *(.init*)
     *(.fini*)
     *(.iplt)
     *(.igot.plt)
@@ -315,7 +479,7 @@ SECTIONS
       KEEP (*(.preinit_fun_array*))
       __preinit_fun_array_end = .;
       . = ALIGN(4);
-  } > FLASH_AREA   
+  } > FLASH_AREA
   .drv_init_fun_array :
   {
       . = ALIGN(4);
@@ -325,7 +489,7 @@ SECTIONS
       __drv_init_fun_array_end = .;
       . = ALIGN(4);
   } > FLASH_AREA
-  
+
   .task_fun_array :
   {
       . = ALIGN(4);
@@ -335,6 +499,108 @@ SECTIONS
       __task_fun_array_end = .;
       . = ALIGN(4);
   } > FLASH_AREA
+
+  ASSERT(. <= TOIT_PLAT_TEXT_LIMIT,
+         "PLAT region overflowed into VM slot A; reduce PLAT or move TOIT_VM_A_ORIGIN.")
+
+  /* Linked at the neutral TOIT_VM_LINK_BASE (VMA), loaded into slot A's flash
+   * region (LMA, via AT). __vm_link_base/__vm_link_end are the link-domain (VMA)
+   * markers gen-slot-reloc relocates FROM; __vm_a_start/__vm_a_end stay the slot
+   * flash geometry the device dispatcher and relocate targets use. */
+  .vm_a TOIT_VM_LINK_BASE : AT (TOIT_VM_A_ORIGIN)
+  {
+    __vm_link_base = .;
+#ifndef TOIT_VM_SLOT_B
+    KEEP(*(.vm_entry))
+    /* VM-side C++ static initializers live inside the slot so each slot
+     * is self-contained. run_static_initializers() in src/toit_ec618.cc
+     * iterates __vm_init_array_*. The VM's writable .data is bracketed
+     * separately in .load_dram_shared (__vm_data_start/_end) and carried
+     * PER-SLOT: its values are NOT slot-agnostic (the interpreter
+     * dispatch_table and *_primitives_ hold in-slot pointers, and the
+     * content differs between firmware builds), so each slot ships its own
+     * .data init image and the device loads the active slot's copy at boot. */
+    . = ALIGN(4);
+    __vm_init_array_start = .;
+    KEEP(*libtoit_vm.a:*(SORT(.init_array.*)))
+    KEEP(*libtoit_vm.a:*(.init_array*))
+    KEEP(*libmbedtls.a:*(SORT(.init_array.*)))
+    KEEP(*libmbedtls.a:*(.init_array*))
+    KEEP(*libmbedx509.a:*(SORT(.init_array.*)))
+    KEEP(*libmbedx509.a:*(.init_array*))
+    KEEP(*libmbedcrypto.a:*(SORT(.init_array.*)))
+    KEEP(*libmbedcrypto.a:*(.init_array*))
+    __vm_init_array_end = .;
+    *libtoit_vm.a:*(.rodata*)
+    *libtoit_vm.a:*(.text*)
+    *libmbedtls.a:*(.rodata*)
+    *libmbedtls.a:*(.text*)
+    *libmbedx509.a:*(.rodata*)
+    *libmbedx509.a:*(.text*)
+    *libmbedcrypto.a:*(.rodata*)
+    *libmbedcrypto.a:*(.text*)
+#endif
+    __vm_link_end = .;
+  }
+  /* Slot A flash geometry: where the (relocated) slot-A image physically lives.
+   * Kept separate from the link base so the flash-address consumers (the slot
+   * dispatcher, inactive/active_slot_base, the relocate targets) are unchanged. */
+  __vm_a_start = TOIT_VM_A_ORIGIN;
+  __vm_a_end   = TOIT_VM_A_ORIGIN + (__vm_link_end - __vm_link_base);
+
+#ifndef TOIT_VM_SLOT_B
+  ASSERT(__vm_a_end - __vm_a_start <= TOIT_VM_SLOT_SIZE,
+         "VM slot A overflowed TOIT_VM_SLOT_SIZE")
+#endif
+
+  .vm_b TOIT_VM_B_ORIGIN :
+  {
+    __vm_b_start = .;
+#ifdef TOIT_VM_SLOT_B
+    KEEP(*(.vm_entry))
+    . = ALIGN(4);
+    __vm_init_array_start = .;
+    KEEP(*libtoit_vm.a:*(SORT(.init_array.*)))
+    KEEP(*libtoit_vm.a:*(.init_array*))
+    KEEP(*libmbedtls.a:*(SORT(.init_array.*)))
+    KEEP(*libmbedtls.a:*(.init_array*))
+    KEEP(*libmbedx509.a:*(SORT(.init_array.*)))
+    KEEP(*libmbedx509.a:*(.init_array*))
+    KEEP(*libmbedcrypto.a:*(SORT(.init_array.*)))
+    KEEP(*libmbedcrypto.a:*(.init_array*))
+    __vm_init_array_end = .;
+    *libtoit_vm.a:*(.rodata*)
+    *libtoit_vm.a:*(.text*)
+    *libmbedtls.a:*(.rodata*)
+    *libmbedtls.a:*(.text*)
+    *libmbedx509.a:*(.rodata*)
+    *libmbedx509.a:*(.text*)
+    *libmbedcrypto.a:*(.rodata*)
+    *libmbedcrypto.a:*(.text*)
+#endif
+    __vm_b_end = .;
+  } >FLASH_AREA
+
+#ifdef TOIT_VM_SLOT_B
+  ASSERT(__vm_b_end - __vm_b_start <= TOIT_VM_SLOT_SIZE,
+         "VM slot B overflowed TOIT_VM_SLOT_SIZE")
+#endif
+
+  .toit_anchor TOIT_ANCHOR_ORIGIN :
+  {
+    __toit_anchor_start = .;
+    KEEP(*(.toit_anchor))
+    /* Reserve both sectors so the AP binary spans the full marker region;
+     * the extension (appended after the binary) therefore starts past
+     * sector 1, leaving the ping-pong's second sector free to be written.
+     * Fresh contents read as "no valid record" → the dispatcher boots
+     * slot A boot state but NO table — the device refuses to boot (anchor.c). */
+    . = __toit_anchor_start + TOIT_ANCHOR_SIZE;
+    __toit_anchor_end = .;
+  } >FLASH_AREA
+
+  ASSERT(__toit_anchor_end - __toit_anchor_start == TOIT_ANCHOR_SIZE,
+         "anchor region must reserve exactly TOIT_ANCHOR_SIZE")
 
   PROVIDE(totalFlashLimit = .);
 

@@ -93,10 +93,10 @@ flash xip address(from ap view): 0x08800000---0x08900000
 #ifdef __USER_CODE__
 
 //fs addr and size
-#define FLASH_FS_REGION_START           (0x384000)
-#define FLASH_FS_REGION_END             (0x3cc000)
-#define FLASH_FS_REGION_SIZE            (FLASH_FS_REGION_END-FLASH_FS_REGION_START) // 352KB
-#define FLASH_FDB_REGION_START			(0x3cc000)	//FDB 64KB
+#define FLASH_FS_REGION_START           (0x191000)
+#define FLASH_FS_REGION_END             (0x1b1000)
+#define FLASH_FS_REGION_SIZE            (FLASH_FS_REGION_END-FLASH_FS_REGION_START) // 128KB
+#define FLASH_FDB_REGION_START			(0x334000)	//Toit registry 672KB
 #define FLASH_FDB_REGION_END            (0x3dc000)
 //softsim addr and size
 #define SOFTSIM_FLASH_PHYSICAL_BASEADDR (0xfcc000)
