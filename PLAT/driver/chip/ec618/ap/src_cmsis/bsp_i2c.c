@@ -46,6 +46,8 @@
 
 #define ARM_I2C_DRV_VERSION    ARM_DRIVER_VERSION_MAJOR_MINOR(2, 0) /* driver version */
 
+#define I2C_MASTER_KNOWN_LENGTH_MAX 512U
+
 #if ((!RTE_I2C0) && (!RTE_I2C1))
 #error "I2C not enabled in RTE_Device.h!"
 #endif
@@ -773,13 +775,18 @@ int32_t I2C_MasterTransmit(uint32_t addr, const uint8_t *data, uint32_t num, boo
             i2c->reg->TDR = i2c->ctrl->data[i2c->ctrl->cnt++];
         }
 
+        bool unknown_length = num > I2C_MASTER_KNOWN_LENGTH_MAX;
         i2c->reg->IER = (I2C_IER_TRANSFER_DONE_Msk |
                          I2C_IER_ARBITRATATION_LOST_Msk |
                          I2C_IER_BUS_ERROR_Msk |
                          I2C_IER_RX_NACK_Msk |
+                         (unknown_length ? I2C_IER_DETECT_STOP_Msk : 0) |
                          ((i2c->ctrl->cnt < num) ? (I2C_IER_TX_FIFO_EMPTY_Msk | I2C_IER_WAIT_TX_FIFO_Msk) : 0));
 
-        reg_value = (((addr << 1) & (I2C_SCR_TARGET_SLAVE_ADDR_Msk)) | ((num - 1) << I2C_SCR_BYTE_NUM_Pos) | I2C_SCR_START_Msk);
+        reg_value = (((addr << 1) & (I2C_SCR_TARGET_SLAVE_ADDR_Msk)) |
+                     (unknown_length ? I2C_SCR_BYTE_NUM_UNKNOWN_Msk
+                                     : ((num - 1) << I2C_SCR_BYTE_NUM_Pos)) |
+                     I2C_SCR_START_Msk);
 
         i2c->reg->SCR = reg_value;
     }
@@ -967,7 +974,9 @@ int32_t I2C_MasterReceive(uint32_t addr, uint8_t *data, uint32_t num, bool xfer_
         // Toit fork: IRQ-driven master RX (see the TX twin above). The IRQ
         // handler drains the FIFO on the threshold-stall interrupts; the
         // TRANSFER_DONE handler drains the tail.
-        i2c->reg->MCR = (EIGEN_VAL2FLD(I2C_MCR_TX_FIFO_THRESHOLD, 8) | EIGEN_VAL2FLD(I2C_MCR_RX_FIFO_THRESHOLD, 8) | I2C_MCR_CONTROL_MODE_Msk | I2C_MCR_I2C_EN_Msk);
+        bool unknown_length = num > I2C_MASTER_KNOWN_LENGTH_MAX;
+        uint32_t rx_threshold = unknown_length ? 1 : 8;
+        i2c->reg->MCR = (EIGEN_VAL2FLD(I2C_MCR_TX_FIFO_THRESHOLD, 8) | EIGEN_VAL2FLD(I2C_MCR_RX_FIFO_THRESHOLD, rx_threshold) | I2C_MCR_CONTROL_MODE_Msk | I2C_MCR_I2C_EN_Msk);
 
         // Clear all flags first(W1C)
         i2c->reg->ISR = i2c->reg->ISR;
@@ -976,10 +985,14 @@ int32_t I2C_MasterReceive(uint32_t addr, uint8_t *data, uint32_t num, bool xfer_
                          I2C_IER_ARBITRATATION_LOST_Msk |
                          I2C_IER_BUS_ERROR_Msk |
                          I2C_IER_RX_NACK_Msk |
+                         (unknown_length ? I2C_IER_DETECT_STOP_Msk : 0) |
                          I2C_IER_RX_FIFO_FULL_Msk |
                          I2C_IER_WAIT_RX_FIFO_Msk);
 
-        reg_value = (((addr << 1) & (I2C_SCR_TARGET_SLAVE_ADDR_Msk)) | ((num - 1) << I2C_SCR_BYTE_NUM_Pos) | I2C_SCR_TARGET_RWN_Msk | I2C_SCR_START_Msk);
+        reg_value = (((addr << 1) & (I2C_SCR_TARGET_SLAVE_ADDR_Msk)) |
+                     (unknown_length ? I2C_SCR_BYTE_NUM_UNKNOWN_Msk
+                                     : ((num - 1) << I2C_SCR_BYTE_NUM_Pos)) |
+                     I2C_SCR_TARGET_RWN_Msk | I2C_SCR_START_Msk);
 
         i2c->reg->SCR = reg_value;
     }
@@ -1308,6 +1321,7 @@ void I2C_IRQHandler(I2C_RESOURCES *i2c)
     uint32_t tmp_status = i2c->reg->ISR;
     uint32_t event = 0;
     I2C_CTRL *ctrl = i2c->ctrl;
+    bool unknown_length = ctrl->num > I2C_MASTER_KNOWN_LENGTH_MAX;
 
     // write 1 clear for those interrupts
     i2c->reg->ISR = tmp_status;
@@ -1319,6 +1333,11 @@ void I2C_IRQHandler(I2C_RESOURCES *i2c)
         while((EIGEN_FLD2VAL(I2C_FSR_RX_FIFO_DATA_NUM, i2c->reg->FSR) > 0) && (ctrl->cnt < ctrl->num))
         {
             ctrl->data[ctrl->cnt++] = i2c->reg->RDR;
+        }
+        if(unknown_length && ctrl->cnt >= ctrl->num)
+        {
+            i2c->reg->IER &= ~(I2C_IER_RX_FIFO_FULL_Msk | I2C_IER_WAIT_RX_FIFO_Msk);
+            i2c->reg->SCR = I2C_SCR_STOP_Msk;
         }
     }
 
@@ -1333,6 +1352,10 @@ void I2C_IRQHandler(I2C_RESOURCES *i2c)
         if(ctrl->cnt >= ctrl->num)
         {
             i2c->reg->IER &= ~(I2C_IER_TX_FIFO_EMPTY_Msk | I2C_IER_WAIT_TX_FIFO_Msk);
+            if(unknown_length)
+            {
+                i2c->reg->SCR = I2C_SCR_STOP_Msk;
+            }
         }
     }
 
@@ -1358,6 +1381,12 @@ void I2C_IRQHandler(I2C_RESOURCES *i2c)
         {
             event |= ARM_I2C_EVENT_TRANSFER_INCOMPLETE;
         }
+    }
+    if((tmp_status & I2C_ISR_DETECT_STOP_Msk) &&
+       (ctrl->flags & (I2C_FLAG_MASTER_TX | I2C_FLAG_MASTER_RX)) &&
+       unknown_length && ctrl->cnt >= ctrl->num)
+    {
+        event |= ARM_I2C_EVENT_TRANSFER_DONE;
     }
 
     // Errors and TRANSFER_DONE all end the transfer. The busy guard makes
