@@ -783,6 +783,8 @@ int32_t I2C_MasterTransmit(uint32_t addr, const uint8_t *data, uint32_t num, boo
                          I2C_IER_ARBITRATATION_LOST_Msk |
                          I2C_IER_BUS_ERROR_Msk |
                          I2C_IER_RX_NACK_Msk |
+                         I2C_IER_TX_FIFO_UNDERRUN_Msk |
+                         I2C_IER_TX_FIFO_OVERFLOW_Msk |
                          (unknown_length ? I2C_IER_DETECT_STOP_Msk : 0) |
                          ((i2c->ctrl->cnt < num) ? (I2C_IER_TX_FIFO_EMPTY_Msk | I2C_IER_WAIT_TX_FIFO_Msk) : 0));
 
@@ -989,6 +991,7 @@ int32_t I2C_MasterReceive(uint32_t addr, uint8_t *data, uint32_t num, bool xfer_
                          I2C_IER_ARBITRATATION_LOST_Msk |
                          I2C_IER_BUS_ERROR_Msk |
                          I2C_IER_RX_NACK_Msk |
+                         I2C_IER_RX_FIFO_OVERFLOW_Msk |
                          (unknown_length ? I2C_IER_DETECT_STOP_Msk : 0) |
                          I2C_IER_RX_FIFO_FULL_Msk |
                          I2C_IER_WAIT_RX_FIFO_Msk);
@@ -1325,6 +1328,7 @@ void I2C_IRQHandler(I2C_RESOURCES *i2c)
     uint32_t tmp_status = i2c->reg->ISR;
     uint32_t event = 0;
     I2C_CTRL *ctrl = i2c->ctrl;
+    uint32_t count_before = ctrl->cnt;
     bool unknown_length = ctrl->num > I2C_MASTER_KNOWN_LENGTH_MAX;
     bool stop_detected =
         (tmp_status & I2C_ISR_DETECT_STOP_Msk) != 0;
@@ -1380,6 +1384,26 @@ void I2C_IRQHandler(I2C_RESOURCES *i2c)
     {
         ctrl->status.arbitration_lost = 1;
         event |= ARM_I2C_EVENT_ARBITRATION_LOST | ARM_I2C_EVENT_TRANSFER_INCOMPLETE;
+    }
+    if(tmp_status & (I2C_ISR_TX_FIFO_UNDERRUN_Msk |
+                     I2C_ISR_TX_FIFO_OVERFLOW_Msk |
+                     I2C_ISR_RX_FIFO_OVERFLOW_Msk))
+    {
+        ctrl->status.bus_error = 1;
+        event |= ARM_I2C_EVENT_BUS_ERROR | ARM_I2C_EVENT_TRANSFER_INCOMPLETE;
+    }
+    // WAIT/FIFO interrupts are level-like requests to move data. Re-arming
+    // one after it made no progress can trap the CPU in this IRQ forever,
+    // starving both Toit cancellation and the software watchdog task. Treat
+    // an impossible no-progress service request as an incomplete transfer;
+    // the caller will reset this peripheral and can reuse the bus.
+    if(event == 0 && ctrl->cnt < ctrl->num && ctrl->cnt == count_before &&
+       (tmp_status & (I2C_ISR_TX_FIFO_EMPTY_Msk |
+                      I2C_ISR_WAIT_TX_FIFO_Msk |
+                      I2C_ISR_RX_FIFO_FULL_Msk |
+                      I2C_ISR_WAIT_RX_FIFO_Msk)))
+    {
+        event |= ARM_I2C_EVENT_TRANSFER_INCOMPLETE;
     }
     if(tmp_status & I2C_ISR_TRANSFER_DONE_Msk)
     {
