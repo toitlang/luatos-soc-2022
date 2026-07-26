@@ -775,6 +775,9 @@ int32_t I2C_MasterTransmit(uint32_t addr, const uint8_t *data, uint32_t num, boo
             i2c->reg->TDR = i2c->ctrl->data[i2c->ctrl->cnt++];
         }
 
+        // The 9-bit counter covers at most 512 bytes. Longer payloads run
+        // the command engine in unknown-length mode; the IRQ handler requests
+        // STOP after it has queued the final byte.
         bool unknown_length = num > I2C_MASTER_KNOWN_LENGTH_MAX;
         i2c->reg->IER = (I2C_IER_TRANSFER_DONE_Msk |
                          I2C_IER_ARBITRATATION_LOST_Msk |
@@ -973,7 +976,8 @@ int32_t I2C_MasterReceive(uint32_t addr, uint8_t *data, uint32_t num, bool xfer_
     {
         // Toit fork: IRQ-driven master RX (see the TX twin above). The IRQ
         // handler drains the FIFO on the threshold-stall interrupts; the
-        // TRANSFER_DONE handler drains the tail.
+        // TRANSFER_DONE handler drains the tail. Unknown-length mode uses
+        // a one-byte threshold to request STOP at the exact boundary.
         bool unknown_length = num > I2C_MASTER_KNOWN_LENGTH_MAX;
         uint32_t rx_threshold = unknown_length ? 1 : 8;
         i2c->reg->MCR = (EIGEN_VAL2FLD(I2C_MCR_TX_FIFO_THRESHOLD, 8) | EIGEN_VAL2FLD(I2C_MCR_RX_FIFO_THRESHOLD, rx_threshold) | I2C_MCR_CONTROL_MODE_Msk | I2C_MCR_I2C_EN_Msk);
@@ -1322,6 +1326,8 @@ void I2C_IRQHandler(I2C_RESOURCES *i2c)
     uint32_t event = 0;
     I2C_CTRL *ctrl = i2c->ctrl;
     bool unknown_length = ctrl->num > I2C_MASTER_KNOWN_LENGTH_MAX;
+    bool stop_detected =
+        (tmp_status & I2C_ISR_DETECT_STOP_Msk) != 0;
 
     // write 1 clear for those interrupts
     i2c->reg->ISR = tmp_status;
@@ -1334,7 +1340,8 @@ void I2C_IRQHandler(I2C_RESOURCES *i2c)
         {
             ctrl->data[ctrl->cnt++] = i2c->reg->RDR;
         }
-        if(unknown_length && ctrl->cnt >= ctrl->num)
+        if(unknown_length && !stop_detected &&
+           ctrl->cnt >= ctrl->num)
         {
             i2c->reg->IER &= ~(I2C_IER_RX_FIFO_FULL_Msk | I2C_IER_WAIT_RX_FIFO_Msk);
             i2c->reg->SCR = I2C_SCR_STOP_Msk;
@@ -1352,7 +1359,7 @@ void I2C_IRQHandler(I2C_RESOURCES *i2c)
         if(ctrl->cnt >= ctrl->num)
         {
             i2c->reg->IER &= ~(I2C_IER_TX_FIFO_EMPTY_Msk | I2C_IER_WAIT_TX_FIFO_Msk);
-            if(unknown_length)
+            if(unknown_length && !stop_detected)
             {
                 i2c->reg->SCR = I2C_SCR_STOP_Msk;
             }
