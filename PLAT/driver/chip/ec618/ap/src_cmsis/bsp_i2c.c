@@ -46,8 +46,6 @@
 
 #define ARM_I2C_DRV_VERSION    ARM_DRIVER_VERSION_MAJOR_MINOR(2, 0) /* driver version */
 
-#define I2C_MASTER_KNOWN_LENGTH_MAX 512U
-
 #if ((!RTE_I2C0) && (!RTE_I2C1))
 #error "I2C not enabled in RTE_Device.h!"
 #endif
@@ -754,47 +752,6 @@ int32_t I2C_MasterTransmit(uint32_t addr, const uint8_t *data, uint32_t num, boo
 
         i2c->reg->SCR = reg_value;
     }
-    else if(i2c->irq)
-    {
-        // Toit fork: IRQ-driven master TX. Upstream never implemented this
-        // path (the per-byte handlers shipped #if 0'd; only the DMA and
-        // polling flavors existed). The command engine runs the whole
-        // transfer in hardware: preload the TX FIFO before issuing the
-        // command (the DMA flavor arms its channel first the same way),
-        // let the FIFO-stall interrupts refill it from the IRQ handler,
-        // and complete on TRANSFER_DONE. The engine holds SCL while the
-        // FIFO is empty, so a late refill stretches the bus instead of
-        // corrupting the transfer.
-        i2c->reg->MCR = (EIGEN_VAL2FLD(I2C_MCR_TX_FIFO_THRESHOLD, 8) | EIGEN_VAL2FLD(I2C_MCR_RX_FIFO_THRESHOLD, 8) | I2C_MCR_CONTROL_MODE_Msk | I2C_MCR_I2C_EN_Msk);
-
-        // Clear all flags first(W1C)
-        i2c->reg->ISR = i2c->reg->ISR;
-
-        while((EIGEN_FLD2VAL(I2C_FSR_TX_FIFO_FREE_NUM, i2c->reg->FSR) > 0) && (i2c->ctrl->cnt < num))
-        {
-            i2c->reg->TDR = i2c->ctrl->data[i2c->ctrl->cnt++];
-        }
-
-        // The 9-bit counter covers at most 512 bytes. Longer payloads run
-        // the command engine in unknown-length mode; the IRQ handler requests
-        // STOP after it has queued the final byte.
-        bool unknown_length = num > I2C_MASTER_KNOWN_LENGTH_MAX;
-        i2c->reg->IER = (I2C_IER_TRANSFER_DONE_Msk |
-                         I2C_IER_ARBITRATATION_LOST_Msk |
-                         I2C_IER_BUS_ERROR_Msk |
-                         I2C_IER_RX_NACK_Msk |
-                         I2C_IER_TX_FIFO_UNDERRUN_Msk |
-                         I2C_IER_TX_FIFO_OVERFLOW_Msk |
-                         (unknown_length ? I2C_IER_DETECT_STOP_Msk : 0) |
-                         ((i2c->ctrl->cnt < num) ? (I2C_IER_TX_FIFO_EMPTY_Msk | I2C_IER_WAIT_TX_FIFO_Msk) : 0));
-
-        reg_value = (((addr << 1) & (I2C_SCR_TARGET_SLAVE_ADDR_Msk)) |
-                     (unknown_length ? I2C_SCR_BYTE_NUM_UNKNOWN_Msk
-                                     : ((num - 1) << I2C_SCR_BYTE_NUM_Pos)) |
-                     I2C_SCR_START_Msk);
-
-        i2c->reg->SCR = reg_value;
-    }
     else
     {
         // Enable interrupts to reflect specific status
@@ -973,35 +930,6 @@ int32_t I2C_MasterReceive(uint32_t addr, uint8_t *data, uint32_t num, bool xfer_
 
         I2CDEBUG("dma configure\n");
         DMA_startChannel(i2c->dma->rx_instance, i2c->dma->rx_ch);
-    }
-    else if(i2c->irq)
-    {
-        // Toit fork: IRQ-driven master RX (see the TX twin above). The IRQ
-        // handler drains the FIFO on the threshold-stall interrupts; the
-        // TRANSFER_DONE handler drains the tail. Unknown-length mode uses
-        // a one-byte threshold to request STOP at the exact boundary.
-        bool unknown_length = num > I2C_MASTER_KNOWN_LENGTH_MAX;
-        uint32_t rx_threshold = unknown_length ? 1 : 8;
-        i2c->reg->MCR = (EIGEN_VAL2FLD(I2C_MCR_TX_FIFO_THRESHOLD, 8) | EIGEN_VAL2FLD(I2C_MCR_RX_FIFO_THRESHOLD, rx_threshold) | I2C_MCR_CONTROL_MODE_Msk | I2C_MCR_I2C_EN_Msk);
-
-        // Clear all flags first(W1C)
-        i2c->reg->ISR = i2c->reg->ISR;
-
-        i2c->reg->IER = (I2C_IER_TRANSFER_DONE_Msk |
-                         I2C_IER_ARBITRATATION_LOST_Msk |
-                         I2C_IER_BUS_ERROR_Msk |
-                         I2C_IER_RX_NACK_Msk |
-                         I2C_IER_RX_FIFO_OVERFLOW_Msk |
-                         (unknown_length ? I2C_IER_DETECT_STOP_Msk : 0) |
-                         I2C_IER_RX_FIFO_FULL_Msk |
-                         I2C_IER_WAIT_RX_FIFO_Msk);
-
-        reg_value = (((addr << 1) & (I2C_SCR_TARGET_SLAVE_ADDR_Msk)) |
-                     (unknown_length ? I2C_SCR_BYTE_NUM_UNKNOWN_Msk
-                                     : ((num - 1) << I2C_SCR_BYTE_NUM_Pos)) |
-                     I2C_SCR_TARGET_RWN_Msk | I2C_SCR_START_Msk);
-
-        i2c->reg->SCR = reg_value;
     }
     else
     {
@@ -1322,116 +1250,59 @@ ARM_I2C_STATUS I2C_GetStatus(I2C_RESOURCES *i2c)
 */
 void I2C_IRQHandler(I2C_RESOURCES *i2c)
 {
-    // Toit fork: complete IRQ-mode master engine. Upstream's handler only
-    // logged and cleared status (the data-movement blocks shipped #if 0'd
-    // and referenced registers that no longer exist).
-    uint32_t tmp_status = i2c->reg->ISR;
-    uint32_t event = 0;
-    I2C_CTRL *ctrl = i2c->ctrl;
-    uint32_t count_before = ctrl->cnt;
-    bool unknown_length = ctrl->num > I2C_MASTER_KNOWN_LENGTH_MAX;
-    bool stop_detected =
-        (tmp_status & I2C_ISR_DETECT_STOP_Msk) != 0;
-
+    uint32_t tmp_status = 0;
+    tmp_status = i2c->reg->ISR;
     // write 1 clear for those interrupts
     i2c->reg->ISR = tmp_status;
 
-    // Master RX: drain whatever the FIFO holds, on every interrupt (the
-    // TRANSFER_DONE interrupt doubles as the tail drain).
-    if(ctrl->flags & I2C_FLAG_MASTER_RX)
-    {
-        while((EIGEN_FLD2VAL(I2C_FSR_RX_FIFO_DATA_NUM, i2c->reg->FSR) > 0) && (ctrl->cnt < ctrl->num))
-        {
-            ctrl->data[ctrl->cnt++] = i2c->reg->RDR;
-        }
-        if(unknown_length && !stop_detected &&
-           ctrl->cnt >= ctrl->num)
-        {
-            i2c->reg->IER &= ~(I2C_IER_RX_FIFO_FULL_Msk | I2C_IER_WAIT_RX_FIFO_Msk);
-            i2c->reg->SCR = I2C_SCR_STOP_Msk;
-        }
-    }
-
-    // Master TX: refill until the payload is fully queued, then mask the
-    // FIFO interrupts (TRANSFER_DONE remains armed).
-    if(ctrl->flags & I2C_FLAG_MASTER_TX)
-    {
-        while((EIGEN_FLD2VAL(I2C_FSR_TX_FIFO_FREE_NUM, i2c->reg->FSR) > 0) && (ctrl->cnt < ctrl->num))
-        {
-            i2c->reg->TDR = ctrl->data[ctrl->cnt++];
-        }
-        if(ctrl->cnt >= ctrl->num)
-        {
-            i2c->reg->IER &= ~(I2C_IER_TX_FIFO_EMPTY_Msk | I2C_IER_WAIT_TX_FIFO_Msk);
-            if(unknown_length && !stop_detected)
-            {
-                i2c->reg->SCR = I2C_SCR_STOP_Msk;
-            }
-        }
-    }
-
-    if(tmp_status & I2C_ISR_RX_NACK_Msk)
-    {
-        ctrl->status.rx_nack = 1;
-        event |= ARM_I2C_EVENT_ADDRESS_NACK | ARM_I2C_EVENT_TRANSFER_INCOMPLETE;
-    }
-    if(tmp_status & I2C_ISR_BUS_ERROR_Msk)
-    {
-        ctrl->status.bus_error = 1;
-        event |= ARM_I2C_EVENT_BUS_ERROR | ARM_I2C_EVENT_TRANSFER_INCOMPLETE;
-    }
-    if(tmp_status & I2C_ISR_ARBITRATATION_LOST_Msk)
-    {
-        ctrl->status.arbitration_lost = 1;
-        event |= ARM_I2C_EVENT_ARBITRATION_LOST | ARM_I2C_EVENT_TRANSFER_INCOMPLETE;
-    }
-    if(tmp_status & (I2C_ISR_TX_FIFO_UNDERRUN_Msk |
-                     I2C_ISR_TX_FIFO_OVERFLOW_Msk |
-                     I2C_ISR_RX_FIFO_OVERFLOW_Msk))
-    {
-        ctrl->status.bus_error = 1;
-        event |= ARM_I2C_EVENT_BUS_ERROR | ARM_I2C_EVENT_TRANSFER_INCOMPLETE;
-    }
-    // WAIT/FIFO interrupts are level-like requests to move data. Re-arming
-    // one after it made no progress can trap the CPU in this IRQ forever,
-    // starving both Toit cancellation and the software watchdog task. Treat
-    // an impossible no-progress service request as an incomplete transfer;
-    // the caller will reset this peripheral and can reuse the bus.
-    if(event == 0 && ctrl->cnt < ctrl->num && ctrl->cnt == count_before &&
-       (tmp_status & (I2C_ISR_TX_FIFO_EMPTY_Msk |
-                      I2C_ISR_WAIT_TX_FIFO_Msk |
-                      I2C_ISR_RX_FIFO_FULL_Msk |
-                      I2C_ISR_WAIT_RX_FIFO_Msk)))
-    {
-        event |= ARM_I2C_EVENT_TRANSFER_INCOMPLETE;
-    }
+    I2CDEBUG("IRQHandler = 0x%x\n", tmp_status);
     if(tmp_status & I2C_ISR_TRANSFER_DONE_Msk)
     {
-        event |= ARM_I2C_EVENT_TRANSFER_DONE;
-        if(ctrl->cnt < ctrl->num)
-        {
-            event |= ARM_I2C_EVENT_TRANSFER_INCOMPLETE;
-        }
-    }
-    if((tmp_status & I2C_ISR_DETECT_STOP_Msk) &&
-       (ctrl->flags & (I2C_FLAG_MASTER_TX | I2C_FLAG_MASTER_RX)) &&
-       unknown_length && ctrl->cnt >= ctrl->num)
-    {
-        event |= ARM_I2C_EVENT_TRANSFER_DONE;
-    }
+        I2CDEBUG("I2C_IRQHandler transfer done\r\n");
 
-    // Errors and TRANSFER_DONE all end the transfer. The busy guard makes
-    // the completion single-shot if the engine raises (say) RX_NACK and
-    // TRANSFER_DONE as separate interrupts.
-    if(event != 0 && ctrl->status.busy)
+        // Clear Tx or Rx flag
+        i2c->ctrl->flags &= ~(I2C_FLAG_MASTER_TX | I2C_FLAG_MASTER_RX);
+        i2c->ctrl->status.busy = 0;
+        if(i2c->ctrl->cb_event)
+           i2c->ctrl->cb_event(ARM_I2C_EVENT_TRANSFER_DONE);
+    }
+    if(tmp_status & I2C_ISR_TX_FIFO_EMPTY_Msk)
     {
-        ctrl->flags &= ~(I2C_FLAG_MASTER_TX | I2C_FLAG_MASTER_RX);
-        i2c->reg->IER = 0;
-        ctrl->status.busy = 0;
-        if(ctrl->cb_event)
+        I2CDEBUG("I2C_IRQHandler tx fifo empty\r\n");
+    }
+    if(tmp_status & I2C_ISR_RX_FIFO_FULL_Msk)
+    {
+        I2CDEBUG("I2C_IRQHandler rx fifo full\r\n");
+    }
+    if(tmp_status & I2C_IER_RX_ONE_DATA_Msk)
+    {
+        I2CDEBUG("I2C_IRQHandler rx one data\r\n");
+        #if 0
+        if(i2c->ctrl->num > i2c->ctrl->cnt)
         {
-            ctrl->cb_event(event);
+            temp_data = i2c->reg->RDR;
+            I2CDEBUG("recv data=%d\n", temp_data);
+            *(i2c->ctrl->data++) = temp_data;
+            i2c->ctrl->cnt++;
         }
+        #endif
+    }
+    if(tmp_status & I2C_IER_TX_ONE_DATA_Msk)
+    {
+        I2CDEBUG("I2C_IRQHandler tx one data\r\n");
+        #if 0
+        if(i2c->ctrl->num > i2c->ctrl->cnt)
+        {
+            if(i2c->ctrl->data)
+            {
+                // If data available
+                temp_data = *(i2c->ctrl->data++);
+            }
+            I2CDEBUG("send data=%d\n", temp_data);
+            i2c->reg->I2CTDR = temp_data;            // Activate send
+            i2c->ctrl->cnt++;
+        }
+        #endif
     }
 }
 
